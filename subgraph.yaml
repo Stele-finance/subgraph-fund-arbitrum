@@ -5,12 +5,73 @@ schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum
+    name: SteleFundSetting
+    network: arbitrum-one
+    source:
+      address: "0x16774b77de5B970B4B6cE57C1Fcd5383759145D4"
+      abi: SteleFundSetting
+      startBlock: 369218378
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - SettingCreated
+        - ManagerFeeChanged
+        - OwnerChanged
+        - WhiteListTokenAdded
+        - WhiteListTokenRemoved
+      abis:
+        - name: SteleFundSetting
+          file: ./abis/SteleFundSetting.json
+      eventHandlers:
+        - event: SettingCreated()
+          handler: handleSettingCreated
+        - event: ManagerFeeChanged(uint256)
+          handler: handleManagerFeeChanged
+        - event: OwnerChanged(address,address)
+          handler: handleOwnerChanged
+        - event: WhiteListTokenAdded(indexed address)
+          handler: handleWhiteListTokenAdded
+        - event: WhiteListTokenRemoved(indexed address)
+          handler: handleWhiteListTokenRemoved
+      file: ./src/stele-fund-setting.ts
+  - kind: ethereum
+    name: SteleFundInfo
+    network: arbitrum-one
+    source:
+      address: "0xe71a6E1B4516756716dd00DBa33D29eAEDc116Bc"
+      abi: SteleFundInfo
+      startBlock: 369218388
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - FundCreated
+        - InfoCreated
+        - OwnerChanged
+        - Subscribe
+      abis:
+        - name: SteleFundInfo
+          file: ./abis/SteleFundInfo.json
+      eventHandlers:
+        - event: FundCreated(uint256,indexed address)
+          handler: handleFundCreated
+        - event: InfoCreated()
+          handler: handleInfoCreated
+        - event: OwnerChanged(address,address)
+          handler: handleOwnerChanged
+        - event: Subscribe(uint256,indexed address)
+          handler: handleSubscribe
+      file: ./src/stele-fund-info.ts
+  - kind: ethereum
     name: SteleFund
     network: arbitrum-one
     source:
-      address: "0x06F07CAec8F4760f8f70f57B04a597Ad1F23d752"
+      address: "0x3Ba91D88C11c3a995b00A6cE33E343c29384a19F"
       abi: SteleFund
-      startBlock: 369189195
+      startBlock: 369218398
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9

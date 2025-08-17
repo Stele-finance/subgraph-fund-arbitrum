@@ -1,8 +1,16 @@
 {
   "arbitrum-one": {
     "SteleFund": {
-      "address": "0x06F07CAec8F4760f8f70f57B04a597Ad1F23d752",
-      "startBlock": 369189195
+      "address": "0x3Ba91D88C11c3a995b00A6cE33E343c29384a19F",
+      "startBlock": 369218398
+    },
+    "SteleFundInfo": {
+      "address": "0xe71a6E1B4516756716dd00DBa33D29eAEDc116Bc",
+      "startBlock": 369218388
+    },
+    "SteleFundSetting": {
+      "address": "0x16774b77de5B970B4B6cE57C1Fcd5383759145D4",
+      "startBlock": 369218378
     }
   }
 }
