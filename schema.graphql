@@ -120,3 +120,148 @@ type WhiteListTokenRemoved @entity(immutable: true) {
   blockTimestamp: BigInt!
   transactionHash: Bytes!
 }
+
+# Cache entities for performance optimization
+type TokenCache @entity(immutable: false) {
+  id: Bytes! # tokenAddress
+  tokenAddress: Bytes!
+  symbol: String!
+  decimals: BigInt!
+  updatedTimestamp: BigInt!
+}
+
+type PriceCache @entity(immutable: false) {
+  id: String! # tokenAddress-timestamp
+  tokenAddress: Bytes!
+  priceETH: BigDecimal!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+}
+
+type Bundle @entity(immutable: false) {
+  id: String! # always "1"
+  ethPriceUSD: BigDecimal!
+  lastUpdateBlock: BigInt!
+  lastUpdateTimestamp: BigInt!
+}
+
+type PoolInfo @entity(immutable: false) {
+  id: String! # tokenA-tokenB-fee
+  tokenA: Bytes!
+  tokenB: Bytes!
+  fee: Int!
+  poolAddress: Bytes!
+  token0: Bytes!
+  token1: Bytes!
+  liquidity: BigInt!
+  liquidityUpdatedTimestamp: BigInt!
+  sqrtPriceX96: BigInt!
+  slot0UpdatedTimestamp: BigInt!
+}
+
+# Fund management entities
+type Info @entity(immutable: false) {
+  id: Bytes!
+  fundCount: BigInt!
+  investorCount: BigInt!
+  totalCurrentETH: BigDecimal!
+  totalCurrentUSD: BigDecimal!
+  owner: Bytes!
+}
+
+type Fund @entity(immutable: false) {
+  id: String! # fundId
+  fundId: String!
+  createdAtTimestamp: BigInt!
+  updatedAtTimestamp: BigInt!
+  manager: Bytes!
+  investorCount: BigInt!
+  currentETH: BigDecimal!
+  currentUSD: BigDecimal!
+  feeTokens: [Bytes!]!
+  feeSymbols: [String!]!
+  feeTokensAmount: [BigDecimal!]!
+  currentTokens: [Bytes!]!
+  currentTokensSymbols: [String!]!
+  currentTokensDecimals: [BigInt!]!
+  currentTokensAmount: [BigDecimal!]!
+}
+
+type Investor @entity(immutable: false) {
+  id: String! # fundId-investor
+  createdAtTimestamp: BigInt!
+  updatedAtTimestamp: BigInt!
+  fundId: String!
+  investor: Bytes!
+  isManager: Boolean!
+  principalETH: BigDecimal!
+  principalUSD: BigDecimal!
+  currentETH: BigDecimal!
+  currentUSD: BigDecimal!
+  currentTokens: [Bytes!]!
+  currentTokensSymbols: [String!]!
+  currentTokensDecimals: [BigInt!]!
+  currentTokensAmount: [BigDecimal!]!
+  profitETH: BigDecimal!
+  profitUSD: BigDecimal!
+  profitRatio: BigDecimal!
+}
+
+type Setting @entity(immutable: false) {
+  id: Bytes!
+  managerFee: BigInt!
+  minPoolAmount: BigInt!
+  owner: Bytes!
+}
+
+type WhiteListToken @entity(immutable: false) {
+  id: Bytes! # token address
+  address: Bytes!
+  decimals: BigInt!
+  symbol: String!
+  updatedTimestamp: BigInt!
+  isWhiteListToken: Boolean!
+}
+
+# Snapshot entities for historical tracking
+type InfoSnapshot @entity(immutable: true) {
+  id: ID!
+  date: Int!
+  fundCount: BigInt!
+  investorCount: BigInt!
+  totalCurrentETH: BigDecimal!
+  totalCurrentUSD: BigDecimal!
+}
+
+type FundSnapshot @entity(immutable: true) {
+  id: ID!
+  timestamp: BigInt!
+  fundId: String!
+  manager: Bytes!
+  investorCount: BigInt!
+  currentETH: BigDecimal!
+  currentUSD: BigDecimal!
+  currentTokens: [Bytes!]!
+  currentTokensSymbols: [String!]!
+  currentTokensDecimals: [BigInt!]!
+  currentTokensAmount: [BigDecimal!]!
+  currentTokensAmountETH: [BigDecimal!]!
+  currentTokensAmountUSD: [BigDecimal!]!
+}
+
+type InvestorSnapshot @entity(immutable: true) {
+  id: ID!
+  timestamp: BigInt!
+  fundId: String!
+  manager: Bytes!
+  investor: Bytes!
+  principalETH: BigDecimal!
+  principalUSD: BigDecimal!
+  tokens: [Bytes!]!
+  tokensSymbols: [String!]!
+  tokensDecimals: [BigInt!]!
+  tokensAmountETH: [BigDecimal!]!
+  tokensAmountUSD: [BigDecimal!]!
+  currentETH: BigDecimal!
+  currentUSD: BigDecimal!
+}

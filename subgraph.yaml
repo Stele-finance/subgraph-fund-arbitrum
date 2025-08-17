@@ -24,6 +24,12 @@ dataSources:
       abis:
         - name: SteleFundSetting
           file: ./abis/SteleFundSetting.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: UniswapV3Factory
+          file: ./abis/UniswapV3Factory.json
+        - name: UniswapV3Pool
+          file: ./abis/UniswapV3Pool.json
       eventHandlers:
         - event: SettingCreated()
           handler: handleSettingCreated
@@ -55,6 +61,12 @@ dataSources:
       abis:
         - name: SteleFundInfo
           file: ./abis/SteleFundInfo.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: UniswapV3Factory
+          file: ./abis/UniswapV3Factory.json
+        - name: UniswapV3Pool
+          file: ./abis/UniswapV3Pool.json
       eventHandlers:
         - event: FundCreated(uint256,indexed address)
           handler: handleFundCreated
@@ -85,6 +97,12 @@ dataSources:
       abis:
         - name: SteleFund
           file: ./abis/SteleFund.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: UniswapV3Factory
+          file: ./abis/UniswapV3Factory.json
+        - name: UniswapV3Pool
+          file: ./abis/UniswapV3Pool.json
       eventHandlers:
         - event: Deposit(uint256,indexed address,address,uint256)
           handler: handleDeposit
