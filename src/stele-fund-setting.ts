@@ -1,22 +1,21 @@
-import { Address, Bytes, BigInt, log } from "@graphprotocol/graph-ts"
+import { Bytes, BigInt } from "@graphprotocol/graph-ts"
 import {
   SettingCreated as SettingCreatedEvent,
   ManagerFeeChanged as ManagerFeeChangedEvent,
   OwnerChanged as OwnerChangedEvent,
-  WhiteListTokenAdded as WhiteListTokenAddedEvent,
-  WhiteListTokenRemoved as WhiteListTokenRemovedEvent,
+  AddToken as AddTokenEvent,
+  RemoveToken as RemoveTokenEvent,
 } from "../generated/SteleFundSetting/SteleFundSetting"
 import {
   SettingCreated,
   ManagerFeeChanged,
   OwnerChanged,
-  WhiteListTokenAdded,
-  WhiteListTokenRemoved,
   Setting,
-  WhiteListToken
+  InvestableToken
 } from "../generated/schema"
 import { 
   STELE_FUND_SETTING_ADDRESS,
+  STELE_FUND_TOKEN_ADDRESS,
   ADDRESS_ZERO,
   DECIMAL_18,
   WETH
@@ -41,15 +40,26 @@ export function handleSettingCreated(event: SettingCreatedEvent): void {
     setting.save()
   }
   
-  const weth = new WhiteListToken(Bytes.fromHexString(WETH))
+  const weth = new InvestableToken(Bytes.fromHexString(WETH))
   weth.id = Bytes.fromHexString(WETH)
   weth.address = Bytes.fromHexString(WETH)
   const wethDecimals = fetchTokenDecimals(Bytes.fromHexString(WETH), event.block.timestamp)
   weth.decimals = wethDecimals !== null ? wethDecimals : BigInt.fromI32(18)
   weth.symbol = fetchTokenSymbol(Bytes.fromHexString(WETH), event.block.timestamp)
   weth.updatedTimestamp = event.block.timestamp
-  weth.isWhiteListToken = true
+  weth.isInvestable = true
   weth.save()
+  
+  // Initialize Stele Fund Token
+  const stelToken = new InvestableToken(Bytes.fromHexString(STELE_FUND_TOKEN_ADDRESS))
+  stelToken.id = Bytes.fromHexString(STELE_FUND_TOKEN_ADDRESS)
+  stelToken.address = Bytes.fromHexString(STELE_FUND_TOKEN_ADDRESS)
+  const stelTokenDecimals = fetchTokenDecimals(Bytes.fromHexString(STELE_FUND_TOKEN_ADDRESS), event.block.timestamp)
+  stelToken.decimals = stelTokenDecimals !== null ? stelTokenDecimals : BigInt.fromI32(18)
+  stelToken.symbol = fetchTokenSymbol(Bytes.fromHexString(STELE_FUND_TOKEN_ADDRESS), event.block.timestamp)
+  stelToken.updatedTimestamp = event.block.timestamp
+  stelToken.isInvestable = true
+  stelToken.save()
 }
 
 export function handleManagerFeeChanged(event: ManagerFeeChangedEvent): void {
@@ -85,48 +95,29 @@ export function handleOwnerChanged(event: OwnerChangedEvent): void {
   setting.save()
 }
 
-export function handleWhiteListTokenAdded(event: WhiteListTokenAddedEvent): void {
-  let entity = new WhiteListTokenAdded(
-    event.transaction.hash.concatI32(event.logIndex.toI32()),
-  )
-  entity.token = event.params.token
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-  entity.save()
-
-  let token = WhiteListToken.load(event.params.token)
-  if (!token) {
-    token = new WhiteListToken(event.params.token)
-    token.id = event.params.token
-    token.address = event.params.token
+export function handleAddToken(event: AddTokenEvent): void {
+  let investableToken = InvestableToken.load(event.params.token)
+  if (!investableToken) {
+    investableToken = new InvestableToken(event.params.token)
+    investableToken.address = event.params.token
     const tokenDecimals = fetchTokenDecimals(event.params.token, event.block.timestamp)
-    token.decimals = tokenDecimals !== null ? tokenDecimals : BigInt.fromI32(18)
-    token.symbol = fetchTokenSymbol(event.params.token, event.block.timestamp)
-    token.updatedTimestamp = event.block.timestamp
-    token.isWhiteListToken = true
-    token.save()
+    investableToken.decimals = tokenDecimals !== null ? tokenDecimals : BigInt.fromI32(18)
+    investableToken.symbol = fetchTokenSymbol(event.params.token, event.block.timestamp)
+    investableToken.updatedTimestamp = event.block.timestamp
+    investableToken.isInvestable = true
+    investableToken.save()
   } else {
-    token.updatedTimestamp = event.block.timestamp
-    token.isWhiteListToken = true
-    token.save()
+    investableToken.updatedTimestamp = event.block.timestamp
+    investableToken.isInvestable = true
+    investableToken.save()
   }
 }
 
-export function handleWhiteListTokenRemoved(event: WhiteListTokenRemovedEvent): void {
-  let entity = new WhiteListTokenRemoved(
-    event.transaction.hash.concatI32(event.logIndex.toI32()),
-  )
-  entity.token = event.params.token
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-  entity.save()
-
-  let token = WhiteListToken.load(event.params.token)
-  if (token) {
-    token.updatedTimestamp = event.block.timestamp
-    token.isWhiteListToken = false
-    token.save()
+export function handleRemoveToken(event: RemoveTokenEvent): void {
+  let investableToken = InvestableToken.load(event.params.token)
+  if (investableToken) {
+    investableToken.updatedTimestamp = event.block.timestamp
+    investableToken.isInvestable = false
+    investableToken.save()
   }
 }

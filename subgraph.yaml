@@ -19,8 +19,8 @@ dataSources:
         - SettingCreated
         - ManagerFeeChanged
         - OwnerChanged
-        - WhiteListTokenAdded
-        - WhiteListTokenRemoved
+        - AddToken
+        - RemoveToken
       abis:
         - name: SteleFundSetting
           file: ./abis/SteleFundSetting.json
@@ -37,10 +37,10 @@ dataSources:
           handler: handleManagerFeeChanged
         - event: OwnerChanged(address,address)
           handler: handleOwnerChanged
-        - event: WhiteListTokenAdded(indexed address)
-          handler: handleWhiteListTokenAdded
-        - event: WhiteListTokenRemoved(indexed address)
-          handler: handleWhiteListTokenRemoved
+        - event: AddToken(indexed address)
+          handler: handleAddToken
+        - event: RemoveToken(indexed address)
+          handler: handleRemoveToken
       file: ./src/stele-fund-setting.ts
   - kind: ethereum
     name: SteleFundInfo

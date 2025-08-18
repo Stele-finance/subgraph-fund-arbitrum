@@ -105,22 +105,6 @@ type ManagerFeeChanged @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
-type WhiteListTokenAdded @entity(immutable: true) {
-  id: Bytes!
-  token: Bytes! # address
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type WhiteListTokenRemoved @entity(immutable: true) {
-  id: Bytes!
-  token: Bytes! # address
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
 # Cache entities for performance optimization
 type TokenCache @entity(immutable: false) {
   id: Bytes! # tokenAddress
@@ -214,13 +198,13 @@ type Setting @entity(immutable: false) {
   owner: Bytes!
 }
 
-type WhiteListToken @entity(immutable: false) {
+type InvestableToken @entity(immutable: false) {
   id: Bytes! # token address
   address: Bytes!
   decimals: BigInt!
   symbol: String!
   updatedTimestamp: BigInt!
-  isWhiteListToken: Boolean!
+  isInvestable: Boolean!
 }
 
 # Snapshot entities for historical tracking

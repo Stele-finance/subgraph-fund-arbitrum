@@ -19,6 +19,19 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "AddToken",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": false,
         "internalType": "uint256",
         "name": "managerFee",
@@ -49,35 +62,41 @@
   },
   {
     "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "RemoveToken",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
     "inputs": [],
     "name": "SettingCreated",
     "type": "event"
   },
   {
-    "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
         "internalType": "address",
-        "name": "token",
+        "name": "",
         "type": "address"
       }
     ],
-    "name": "WhiteListTokenAdded",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
+    "name": "isInvestable",
+    "outputs": [
       {
-        "indexed": true,
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
       }
     ],
-    "name": "WhiteListTokenRemoved",
-    "type": "event"
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "inputs": [],
@@ -113,7 +132,7 @@
         "type": "address"
       }
     ],
-    "name": "resetWhiteListToken",
+    "name": "resetToken",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -152,7 +171,7 @@
         "type": "address"
       }
     ],
-    "name": "setWhiteListToken",
+    "name": "setToken",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -178,25 +197,6 @@
         "internalType": "address",
         "name": "",
         "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "whiteListTokens",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
       }
     ],
     "stateMutability": "view",
