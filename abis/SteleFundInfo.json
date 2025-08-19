@@ -20,13 +20,32 @@
         "type": "address"
       }
     ],
-    "name": "FundCreated",
+    "name": "Create",
     "type": "event"
   },
   {
     "anonymous": false,
     "inputs": [],
     "name": "InfoCreated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "fundId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "investor",
+        "type": "address"
+      }
+    ],
+    "name": "Join",
     "type": "event"
   },
   {
@@ -49,27 +68,8 @@
     "type": "event"
   },
   {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "fundId",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "investor",
-        "type": "address"
-      }
-    ],
-    "name": "Subscribe",
-    "type": "event"
-  },
-  {
     "inputs": [],
-    "name": "createFund",
+    "name": "create",
     "outputs": [
       {
         "internalType": "uint256",
@@ -332,6 +332,25 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "investor",
+        "type": "address"
+      }
+    ],
+    "name": "getInvestingFunds",
+    "outputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint256",
         "name": "fundId",
         "type": "uint256"
@@ -577,7 +596,7 @@
         "type": "uint256"
       }
     ],
-    "name": "isSubscribed",
+    "name": "isJoined",
     "outputs": [
       {
         "internalType": "bool",
@@ -586,6 +605,19 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "fundId",
+        "type": "uint256"
+      }
+    ],
+    "name": "join",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -650,38 +682,6 @@
     "name": "setOwner",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "fundId",
-        "type": "uint256"
-      }
-    ],
-    "name": "subscribe",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "investor",
-        "type": "address"
-      }
-    ],
-    "name": "subscribedFunds",
-    "outputs": [
-      {
-        "internalType": "uint256[]",
-        "name": "",
-        "type": "uint256[]"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   }
 ]

@@ -1,17 +1,17 @@
 import { Address, Bytes, log } from "@graphprotocol/graph-ts"
 import {
-  FundCreated as FundCreatedEvent,
+  Create as CreateEvent,
   InfoCreated as InfoCreatedEvent,
   OwnerChanged as OwnerChangedEvent,
-  Subscribe as SubscribeEvent,
+  Join as JoinEvent,
   SteleFundInfo
 } from "../generated/SteleFundInfo/SteleFundInfo"
 import {
   Info,
   Fund,
   Investor,
-  Subscribe,
-  FundCreated,
+  Join,
+  Create,
   InfoCreated,
   OwnerChanged as OwnerChangedEntity
 } from "../generated/schema"
@@ -31,8 +31,8 @@ import {
   investorSnapshot
 } from './util/snapshots'
 
-export function handleFundCreated(event: FundCreatedEvent): void {
-  let entity = new FundCreated(
+export function handleCreate(event: CreateEvent): void {
+  let entity = new Create(
     event.transaction.hash.concatI32(event.logIndex.toI32()),
   )
   entity.fundId = event.params.fundId
@@ -133,8 +133,8 @@ export function handleOwnerChanged(event: OwnerChangedEvent): void {
   info.save()
 }
 
-export function handleSubscribe(event: SubscribeEvent): void {
-  let entity = new Subscribe(
+export function handleJoin(event: JoinEvent): void {
+  let entity = new Join(
     event.transaction.hash.concatI32(event.logIndex.toI32()),
   )
   entity.fundId = event.params.fundId

@@ -56,7 +56,7 @@ type WithdrawFee @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
-type FundCreated @entity(immutable: true) {
+type Create @entity(immutable: true) {
   id: Bytes!
   fundId: BigInt! # uint256
   manager: Bytes! # address
@@ -81,7 +81,7 @@ type OwnerChanged @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
-type Subscribe @entity(immutable: true) {
+type Join @entity(immutable: true) {
   id: Bytes!
   fundId: BigInt! # uint256
   investor: Bytes! # address
