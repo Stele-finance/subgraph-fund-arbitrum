@@ -1,11 +1,10 @@
-import { Address, BigInt, log, Bytes } from "@graphprotocol/graph-ts"
+import { Address, BigInt, log } from "@graphprotocol/graph-ts"
 import {
   Deposit as DepositEvent,
   DepositFee as DepositFeeEvent,
   Swap as SwapEvent,
   Withdraw as WithdrawEvent,
   WithdrawFee as WithdrawFeeEvent,
-  SteleFund
 } from "../generated/SteleFund/SteleFund"
 import {
   SteleFundInfo
@@ -30,11 +29,6 @@ import {
   getCachedTokenPriceETH,
 } from './util/pricing'
 import { fetchTokenSymbol, fetchTokenDecimals } from './util/token'
-import {
-  infoSnapshot,
-  fundSnapshot,
-  investorSnapshot
-} from './util/snapshots'
 
 export function handleDeposit(event: DepositEvent): void {
   let entity = new Deposit(
@@ -143,7 +137,7 @@ export function handleSwap(event: SwapEvent): void {
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   entity.fundId = event.params.fundId
-  entity.investor = event.params.investor
+  entity.investor = event.transaction.from
   entity.tokenIn = event.params.tokenIn
   entity.tokenOut = event.params.tokenOut
   entity.amountIn = event.params.amountIn

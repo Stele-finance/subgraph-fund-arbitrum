@@ -15,10 +15,10 @@ import {
 } from "../generated/schema"
 import { 
   STELE_FUND_SETTING_ADDRESS,
-  STELE_FUND_TOKEN_ADDRESS,
   ADDRESS_ZERO,
   DECIMAL_18,
-  WETH
+  WETH,
+  USDC,
 } from './util/constants'
 import { fetchTokenSymbol, fetchTokenDecimals } from './util/token'
 
@@ -51,15 +51,15 @@ export function handleSettingCreated(event: SettingCreatedEvent): void {
   weth.save()
   
   // Initialize Stele Fund Token
-  const stelToken = new InvestableToken(Bytes.fromHexString(STELE_FUND_TOKEN_ADDRESS))
-  stelToken.id = Bytes.fromHexString(STELE_FUND_TOKEN_ADDRESS)
-  stelToken.address = Bytes.fromHexString(STELE_FUND_TOKEN_ADDRESS)
-  const stelTokenDecimals = fetchTokenDecimals(Bytes.fromHexString(STELE_FUND_TOKEN_ADDRESS), event.block.timestamp)
-  stelToken.decimals = stelTokenDecimals !== null ? stelTokenDecimals : BigInt.fromI32(18)
-  stelToken.symbol = fetchTokenSymbol(Bytes.fromHexString(STELE_FUND_TOKEN_ADDRESS), event.block.timestamp)
-  stelToken.updatedTimestamp = event.block.timestamp
-  stelToken.isInvestable = true
-  stelToken.save()
+  const usdc = new InvestableToken(Bytes.fromHexString(USDC))
+  usdc.id = Bytes.fromHexString(USDC)
+  usdc.address = Bytes.fromHexString(USDC)
+  const usdcDecimals = fetchTokenDecimals(Bytes.fromHexString(USDC), event.block.timestamp)
+  usdc.decimals = usdcDecimals !== null ? usdcDecimals : BigInt.fromI32(6)
+  usdc.symbol = fetchTokenSymbol(Bytes.fromHexString(USDC), event.block.timestamp)
+  usdc.updatedTimestamp = event.block.timestamp
+  usdc.isInvestable = true
+  usdc.save()
 }
 
 export function handleManagerFeeChanged(event: ManagerFeeChangedEvent): void {

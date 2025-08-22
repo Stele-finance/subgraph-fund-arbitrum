@@ -8,9 +8,9 @@ dataSources:
     name: SteleFundSetting
     network: arbitrum-one
     source:
-      address: "0x24C8d6Be85c6F627C5Ec3baFCd8268742cC1CFeE"
+      address: "0x71295d1a25e904dd184659c506a3d867476567f6"
       abi: SteleFundSetting
-      startBlock: 369856158
+      startBlock: 370734103
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
@@ -46,9 +46,9 @@ dataSources:
     name: SteleFundInfo
     network: arbitrum-one
     source:
-      address: "0xeb8cA3abaab8FA025616393c2112e96af30aeb90"
+      address: "0xee8722e695ce68e69041a3d2ad75abf65b0afc8f"
       abi: SteleFundInfo
-      startBlock: 369856168
+      startBlock: 370734115
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
@@ -58,6 +58,8 @@ dataSources:
         - InfoCreated
         - OwnerChanged
         - Join
+        - FundShare
+        - InvestorShare
       abis:
         - name: SteleFundInfo
           file: ./abis/SteleFundInfo.json
@@ -76,14 +78,16 @@ dataSources:
           handler: handleOwnerChanged
         - event: Join(uint256,indexed address)
           handler: handleJoin
+        - event: UpdateShare(uint256,indexed address,uint256,uint256)
+          handler: handleUpdateShare
       file: ./src/stele-fund-info.ts
   - kind: ethereum
     name: SteleFund
     network: arbitrum-one
     source:
-      address: "0x5BDDBBB0B5F140038e9B2830C9347a0319DFE212"
+      address: "0x0d3b0f837d4dd7c492f535d93ffc56e2ffa87e29"
       abi: SteleFund
-      startBlock: 369856177
+      startBlock: 370734128
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
@@ -97,6 +101,8 @@ dataSources:
       abis:
         - name: SteleFund
           file: ./abis/SteleFund.json
+        - name: SteleFundInfo
+          file: ./abis/SteleFundInfo.json
         - name: ERC20
           file: ./abis/ERC20.json
         - name: UniswapV3Factory
@@ -108,7 +114,7 @@ dataSources:
           handler: handleDeposit
         - event: DepositFee(uint256,indexed address,address,uint256)
           handler: handleDepositFee
-        - event: Swap(uint256,indexed address,address,address,uint256,uint256)
+        - event: Swap(uint256,address,address,uint256,uint256)
           handler: handleSwap
         - event: Withdraw(uint256,indexed address,address,uint256,uint256)
           handler: handleWithdraw

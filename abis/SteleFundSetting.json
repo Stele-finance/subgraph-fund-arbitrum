@@ -3,12 +3,12 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_stele",
+        "name": "_weth9",
         "type": "address"
       },
       {
         "internalType": "address",
-        "name": "_weth9",
+        "name": "_usdc",
         "type": "address"
       }
     ],
@@ -178,7 +178,7 @@
   },
   {
     "inputs": [],
-    "name": "steleToken",
+    "name": "usdc",
     "outputs": [
       {
         "internalType": "address",

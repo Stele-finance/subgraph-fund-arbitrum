@@ -90,6 +90,25 @@ type Join @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+type FundShare @entity(immutable: false) {
+  id: Bytes!
+  fundId: BigInt! # uint256
+  totalShare: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type InvestorShare @entity(immutable: false) {
+  id: Bytes!
+  fundId: BigInt! # uint256
+  investor: Bytes! # address
+  share: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
 type SettingCreated @entity(immutable: true) {
   id: Bytes!
   blockNumber: BigInt!
@@ -100,6 +119,22 @@ type SettingCreated @entity(immutable: true) {
 type ManagerFeeChanged @entity(immutable: true) {
   id: Bytes!
   managerFee: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type AddToken @entity(immutable: true) {
+  id: Bytes!
+  token: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type RemoveToken @entity(immutable: true) {
+  id: Bytes!
+  token: Bytes! # address
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -178,6 +213,7 @@ type Investor @entity(immutable: false) {
   fundId: String!
   investor: Bytes!
   isManager: Boolean!
+  share: BigInt
   principalETH: BigDecimal!
   principalUSD: BigDecimal!
   currentETH: BigDecimal!

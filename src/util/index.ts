@@ -3,7 +3,7 @@ import { ONE_BD, ZERO_BD } from './constants'
 
 export function exponentToBigDecimal(decimals: BigInt): BigDecimal {
   let bd = BigDecimal.fromString('1')
-  for (let i = ZERO_BD.toString().length; i < decimals.toI32(); i++) {
+  for (let i = 0; i < decimals.toI32(); i++) {
     bd = bd.times(BigDecimal.fromString('10'))
   }
   return bd
