@@ -1,4 +1,4 @@
-import { Address, BigInt, log } from "@graphprotocol/graph-ts"
+import { Address, BigInt, BigDecimal, log } from "@graphprotocol/graph-ts"
 import {
   Deposit as DepositEvent,
   DepositFee as DepositFeeEvent,
@@ -37,7 +37,22 @@ export function handleDeposit(event: DepositEvent): void {
   entity.fundId = event.params.fundId
   entity.investor = event.params.investor
   entity.token = event.params.token
-  entity.amount = event.params.amount
+  
+  // Convert raw amount to formatted amount
+  let tokenDecimals = fetchTokenDecimals(event.params.token, event.block.timestamp)
+  if (tokenDecimals !== null) {
+    let decimalDivisor = exponentToBigDecimal(tokenDecimals)
+    let formattedAmount = BigDecimal.fromString(event.params.amount.toString())
+      .div(decimalDivisor)
+    entity.amount = formattedAmount
+  } else {
+    log.warning('[DEPOSIT] Failed to get decimals for token: {}', [event.params.token.toHexString()])
+    entity.amount = BigDecimal.fromString("0")
+  }
+  
+  // Fetch token symbol
+  entity.symbol = fetchTokenSymbol(event.params.token, event.block.timestamp)
+  
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
   entity.transactionHash = event.transaction.hash
@@ -59,7 +74,8 @@ export function handleDeposit(event: DepositEvent): void {
     if (tokenPriceETH === null) return
     const ethPriceInUSD = getCachedEthPriceUSD(event.block.timestamp)
 
-    const amountDecimal = event.params.amount.divDecimal(tokenDecimal)
+    // Use the formatted amount from entity.amount instead of raw amount
+    const amountDecimal = entity.amount
     const amountETH = amountDecimal.times(tokenPriceETH)
     const amountUSD = amountETH.times(ethPriceInUSD)
 
@@ -125,7 +141,22 @@ export function handleDepositFee(event: DepositFeeEvent): void {
   entity.fundId = event.params.fundId
   entity.investor = event.params.investor
   entity.token = event.params.token
-  entity.amount = event.params.amount
+  
+  // Convert raw amount to formatted amount
+  let tokenDecimals = fetchTokenDecimals(event.params.token, event.block.timestamp)
+  if (tokenDecimals !== null) {
+    let decimalDivisor = exponentToBigDecimal(tokenDecimals)
+    let formattedAmount = BigDecimal.fromString(event.params.amount.toString())
+      .div(decimalDivisor)
+    entity.amount = formattedAmount
+  } else {
+    log.warning('[DEPOSIT_FEE] Failed to get decimals for token: {}', [event.params.token.toHexString()])
+    entity.amount = BigDecimal.fromString("0")
+  }
+  
+  // Fetch token symbol
+  entity.symbol = fetchTokenSymbol(event.params.token, event.block.timestamp)
+  
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
   entity.transactionHash = event.transaction.hash
@@ -140,8 +171,35 @@ export function handleSwap(event: SwapEvent): void {
   entity.investor = event.transaction.from
   entity.tokenIn = event.params.tokenIn
   entity.tokenOut = event.params.tokenOut
-  entity.amountIn = event.params.amountIn
-  entity.amountOut = event.params.amountOut
+  
+  // Convert raw amounts to formatted amounts
+  let tokenInDecimals = fetchTokenDecimals(event.params.tokenIn, event.block.timestamp)
+  let tokenOutDecimals = fetchTokenDecimals(event.params.tokenOut, event.block.timestamp)
+  
+  if (tokenInDecimals !== null) {
+    let decimalDivisor = exponentToBigDecimal(tokenInDecimals)
+    let formattedAmount = BigDecimal.fromString(event.params.amountIn.toString())
+      .div(decimalDivisor)
+    entity.tokenInAmount = formattedAmount
+  } else {
+    log.warning('[SWAP] Failed to get decimals for tokenIn: {}', [event.params.tokenIn.toHexString()])
+    entity.tokenInAmount = BigDecimal.fromString("0")
+  }
+  
+  if (tokenOutDecimals !== null) {
+    let decimalDivisor = exponentToBigDecimal(tokenOutDecimals)
+    let formattedAmount = BigDecimal.fromString(event.params.amountOut.toString())
+      .div(decimalDivisor)
+    entity.tokenOutAmount = formattedAmount
+  } else {
+    log.warning('[SWAP] Failed to get decimals for tokenOut: {}', [event.params.tokenOut.toHexString()])
+    entity.tokenOutAmount = BigDecimal.fromString("0")
+  }
+  
+  // Fetch token symbols
+  entity.tokenInSymbol = fetchTokenSymbol(event.params.tokenIn, event.block.timestamp)
+  entity.tokenOutSymbol = fetchTokenSymbol(event.params.tokenOut, event.block.timestamp)
+  
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
   entity.transactionHash = event.transaction.hash
@@ -150,18 +208,10 @@ export function handleSwap(event: SwapEvent): void {
   const fundId = event.params.fundId
   let fund = Fund.load(fundId.toString())
   if (fund !== null) {
-    const tokenInDecimals = fetchTokenDecimals(event.params.tokenIn, event.block.timestamp)
+    // Use the formatted amounts from entity
+    const amountIn = entity.tokenInAmount
+    const amountOut = entity.tokenOutAmount
     const tokenOutDecimals = fetchTokenDecimals(event.params.tokenOut, event.block.timestamp)
-    
-    if (tokenInDecimals === null || tokenOutDecimals === null) {
-      log.debug('token decimals was null', [])
-      return
-    }
-
-    const tokenInDecimal = exponentToBigDecimal(tokenInDecimals)
-    const tokenOutDecimal = exponentToBigDecimal(tokenOutDecimals)
-    const amountIn = event.params.amountIn.divDecimal(tokenInDecimal)
-    const amountOut = event.params.amountOut.divDecimal(tokenOutDecimal)
 
     // Update token balances
     let tokenInIndex = -1
@@ -208,7 +258,11 @@ export function handleSwap(event: SwapEvent): void {
       
       tokens.push(event.params.tokenOut)
       symbols.push(fetchTokenSymbol(event.params.tokenOut, event.block.timestamp))
-      decimalsArray.push(tokenOutDecimals)
+      if (tokenOutDecimals !== null) {
+        decimalsArray.push(tokenOutDecimals)
+      } else {
+        decimalsArray.push(BigInt.fromI32(18)) // default to 18 decimals
+      }
       amounts.push(amountOut)
       
       fund.currentTokens = tokens
@@ -250,26 +304,39 @@ export function handleWithdraw(event: WithdrawEvent): void {
   entity.fundId = event.params.fundId
   entity.investor = event.params.investor
   entity.token = event.params.token
-  entity.amount = event.params.amount
-  entity.feeAmount = event.params.feeAmount
+  
+  // Convert raw amounts to formatted amounts
+  let tokenDecimals = fetchTokenDecimals(event.params.token, event.block.timestamp)
+  if (tokenDecimals !== null) {
+    let decimalDivisor = exponentToBigDecimal(tokenDecimals)
+    let formattedAmount = BigDecimal.fromString(event.params.amount.toString())
+      .div(decimalDivisor)
+    entity.amount = formattedAmount
+    
+    let formattedFeeAmount = BigDecimal.fromString(event.params.feeAmount.toString())
+      .div(decimalDivisor)
+    entity.feeAmount = formattedFeeAmount
+  } else {
+    log.warning('[WITHDRAW] Failed to get decimals for token: {}', [event.params.token.toHexString()])
+    entity.amount = BigDecimal.fromString("0")
+    entity.feeAmount = BigDecimal.fromString("0")
+  }
+  
+  // Fetch token symbol
+  entity.symbol = fetchTokenSymbol(event.params.token, event.block.timestamp)
+  
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
   entity.transactionHash = event.transaction.hash
   entity.save()
 
   const fundId = event.params.fundId
-  const decimals = fetchTokenDecimals(event.params.token, event.block.timestamp)
-  if (decimals === null) {
-    log.debug('the decimals on {} token was null', [event.params.token.toHexString()])
-    return
-  }
-
-  const tokenDecimal = exponentToBigDecimal(decimals)
   const tokenPriceETH = getCachedTokenPriceETH(event.params.token, event.block.timestamp)
   if (tokenPriceETH === null) return
   const ethPriceInUSD = getCachedEthPriceUSD(event.block.timestamp)
   
-  const amountDecimal = event.params.amount.divDecimal(tokenDecimal)
+  // Use the formatted amount from entity
+  const amountDecimal = entity.amount
   const amountETH = amountDecimal.times(tokenPriceETH)
   const amountUSD = amountETH.times(ethPriceInUSD)
 
@@ -318,7 +385,8 @@ export function handleWithdraw(event: WithdrawEvent): void {
     
     // Handle fee
     if (event.params.feeAmount.gt(ZERO_BI)) {
-      const feeDecimal = event.params.feeAmount.divDecimal(tokenDecimal)
+      // Use the formatted fee amount from entity
+      const feeDecimal = entity.feeAmount
       
       // Add to fee tokens
       let feeIndex = -1
@@ -361,7 +429,22 @@ export function handleWithdrawFee(event: WithdrawFeeEvent): void {
   entity.fundId = event.params.fundId
   entity.manager = event.params.manager
   entity.token = event.params.token
-  entity.amount = event.params.amount
+  
+  // Convert raw amount to formatted amount
+  let tokenDecimals = fetchTokenDecimals(event.params.token, event.block.timestamp)
+  if (tokenDecimals !== null) {
+    let decimalDivisor = exponentToBigDecimal(tokenDecimals)
+    let formattedAmount = BigDecimal.fromString(event.params.amount.toString())
+      .div(decimalDivisor)
+    entity.amount = formattedAmount
+  } else {
+    log.warning('[WITHDRAW_FEE] Failed to get decimals for token: {}', [event.params.token.toHexString()])
+    entity.amount = BigDecimal.fromString("0")
+  }
+  
+  // Fetch token symbol
+  entity.symbol = fetchTokenSymbol(event.params.token, event.block.timestamp)
+  
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
   entity.transactionHash = event.transaction.hash

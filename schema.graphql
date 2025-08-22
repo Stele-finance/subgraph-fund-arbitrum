@@ -3,7 +3,8 @@ type Deposit @entity(immutable: true) {
   fundId: BigInt! # uint256
   investor: Bytes! # address
   token: Bytes! # address
-  amount: BigInt! # uint256
+  symbol: String!
+  amount: BigDecimal! # formatted amount (not raw)
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -14,7 +15,8 @@ type DepositFee @entity(immutable: true) {
   fundId: BigInt! # uint256
   investor: Bytes! # address
   token: Bytes! # address
-  amount: BigInt! # uint256
+  symbol: String!
+  amount: BigDecimal! # formatted amount (not raw)
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -26,8 +28,10 @@ type Swap @entity(immutable: true) {
   investor: Bytes! # address
   tokenIn: Bytes! # address
   tokenOut: Bytes! # address
-  amountIn: BigInt! # uint256
-  amountOut: BigInt! # uint256
+  tokenInSymbol: String!
+  tokenOutSymbol: String!
+  tokenInAmount: BigDecimal! # formatted amount (not raw)
+  tokenOutAmount: BigDecimal! # formatted amount (not raw)
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -38,8 +42,9 @@ type Withdraw @entity(immutable: true) {
   fundId: BigInt! # uint256
   investor: Bytes! # address
   token: Bytes! # address
-  amount: BigInt! # uint256
-  feeAmount: BigInt! # uint256
+  symbol: String!
+  amount: BigDecimal! # formatted amount (not raw)
+  feeAmount: BigDecimal! # formatted amount (not raw)
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -50,7 +55,8 @@ type WithdrawFee @entity(immutable: true) {
   fundId: BigInt! # uint256
   manager: Bytes! # address
   token: Bytes! # address
-  amount: BigInt! # uint256
+  symbol: String!
+  amount: BigDecimal! # formatted amount (not raw)
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
