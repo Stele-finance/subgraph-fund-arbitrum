@@ -5,6 +5,8 @@ type Deposit @entity(immutable: true) {
   token: Bytes! # address
   symbol: String!
   amount: BigDecimal! # formatted amount (not raw)
+  share: BigInt! # uint256
+  totalShare: BigInt! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -13,7 +15,7 @@ type Deposit @entity(immutable: true) {
 type DepositFee @entity(immutable: true) {
   id: Bytes!
   fundId: BigInt! # uint256
-  investor: Bytes! # address
+  manager: Bytes! # address
   token: Bytes! # address
   symbol: String!
   amount: BigDecimal! # formatted amount (not raw)
@@ -41,10 +43,8 @@ type Withdraw @entity(immutable: true) {
   id: Bytes!
   fundId: BigInt! # uint256
   investor: Bytes! # address
-  token: Bytes! # address
-  symbol: String!
-  amount: BigDecimal! # formatted amount (not raw)
-  feeAmount: BigDecimal! # formatted amount (not raw)
+  share: BigInt! # uint256
+  totalShare: BigInt! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -146,6 +146,22 @@ type RemoveToken @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+type MaxSlippageChanged @entity(immutable: true) {
+  id: Bytes!
+  maxSlippage: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type MaxTokensChanged @entity(immutable: true) {
+  id: Bytes!
+  maxTokens: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
 # Cache entities for performance optimization
 type TokenCache @entity(immutable: false) {
   id: Bytes! # tokenAddress
@@ -237,6 +253,8 @@ type Setting @entity(immutable: false) {
   id: Bytes!
   managerFee: BigInt!
   minPoolAmount: BigInt!
+  maxSlippage: BigInt!
+  maxTokens: BigInt!
   owner: Bytes!
 }
 

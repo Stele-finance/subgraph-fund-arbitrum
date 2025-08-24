@@ -37,6 +37,8 @@ export function handleDeposit(event: DepositEvent): void {
   entity.fundId = event.params.fundId
   entity.investor = event.params.investor
   entity.token = event.params.token
+  entity.share = event.params.share
+  entity.totalShare = event.params.totalShare
   
   // Convert raw amount to formatted amount
   let tokenDecimals = fetchTokenDecimals(event.params.token, event.block.timestamp)
@@ -139,7 +141,7 @@ export function handleDepositFee(event: DepositFeeEvent): void {
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   entity.fundId = event.params.fundId
-  entity.investor = event.params.investor
+  entity.manager = event.params.investor  // In SteleFund contract, the second param is still 'investor' but it's actually the manager
   entity.token = event.params.token
   
   // Convert raw amount to formatted amount
@@ -303,122 +305,22 @@ export function handleWithdraw(event: WithdrawEvent): void {
   )
   entity.fundId = event.params.fundId
   entity.investor = event.params.investor
-  entity.token = event.params.token
-  
-  // Convert raw amounts to formatted amounts
-  let tokenDecimals = fetchTokenDecimals(event.params.token, event.block.timestamp)
-  if (tokenDecimals !== null) {
-    let decimalDivisor = exponentToBigDecimal(tokenDecimals)
-    let formattedAmount = BigDecimal.fromString(event.params.amount.toString())
-      .div(decimalDivisor)
-    entity.amount = formattedAmount
-    
-    let formattedFeeAmount = BigDecimal.fromString(event.params.feeAmount.toString())
-      .div(decimalDivisor)
-    entity.feeAmount = formattedFeeAmount
-  } else {
-    log.warning('[WITHDRAW] Failed to get decimals for token: {}', [event.params.token.toHexString()])
-    entity.amount = BigDecimal.fromString("0")
-    entity.feeAmount = BigDecimal.fromString("0")
-  }
-  
-  // Fetch token symbol
-  entity.symbol = fetchTokenSymbol(event.params.token, event.block.timestamp)
+  entity.share = event.params.share
+  entity.totalShare = event.params.totalShare
   
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
   entity.transactionHash = event.transaction.hash
   entity.save()
 
+  // Update investor share
   const fundId = event.params.fundId
-  const tokenPriceETH = getCachedTokenPriceETH(event.params.token, event.block.timestamp)
-  if (tokenPriceETH === null) return
-  const ethPriceInUSD = getCachedEthPriceUSD(event.block.timestamp)
-  
-  // Use the formatted amount from entity
-  const amountDecimal = entity.amount
-  const amountETH = amountDecimal.times(tokenPriceETH)
-  const amountUSD = amountETH.times(ethPriceInUSD)
-
-  // Update investor
   const investorID = fundId.toString() + "-" + event.params.investor.toHexString()
   let investor = Investor.load(investorID)
   if (investor !== null) {
-    investor.principalETH = investor.principalETH.minus(amountETH)
-    investor.principalUSD = investor.principalUSD.minus(amountUSD)
+    investor.share = event.params.share
     investor.updatedAtTimestamp = event.block.timestamp
     investor.save()
-  }
-
-  // Update fund
-  let fund = Fund.load(fundId.toString())
-  if (fund !== null) {
-    fund.currentETH = fund.currentETH.minus(amountETH)
-    fund.currentUSD = fund.currentUSD.minus(amountUSD)
-    fund.updatedAtTimestamp = event.block.timestamp
-    
-    // Update token balance
-    for (let i = 0; i < fund.currentTokens.length; i++) {
-      if (fund.currentTokens[i].equals(event.params.token)) {
-        let amounts = fund.currentTokensAmount
-        amounts[i] = amounts[i].minus(amountDecimal)
-        
-        if (amounts[i].le(ZERO_BD)) {
-          // Remove token if balance is zero
-          let tokens = fund.currentTokens
-          let symbols = fund.currentTokensSymbols
-          let decimalsArray = fund.currentTokensDecimals
-          
-          tokens.splice(i, 1)
-          symbols.splice(i, 1)
-          decimalsArray.splice(i, 1)
-          amounts.splice(i, 1)
-          
-          fund.currentTokens = tokens
-          fund.currentTokensSymbols = symbols
-          fund.currentTokensDecimals = decimalsArray
-        }
-        fund.currentTokensAmount = amounts
-        break
-      }
-    }
-    
-    // Handle fee
-    if (event.params.feeAmount.gt(ZERO_BI)) {
-      // Use the formatted fee amount from entity
-      const feeDecimal = entity.feeAmount
-      
-      // Add to fee tokens
-      let feeIndex = -1
-      for (let i = 0; i < fund.feeTokens.length; i++) {
-        if (fund.feeTokens[i].equals(event.params.token)) {
-          feeIndex = i
-          break
-        }
-      }
-      
-      if (feeIndex === -1) {
-        // New fee token
-        let feeTokens = fund.feeTokens
-        let feeSymbols = fund.feeSymbols
-        let feeAmounts = fund.feeTokensAmount
-        
-        feeTokens.push(event.params.token)
-        feeSymbols.push(fetchTokenSymbol(event.params.token, event.block.timestamp))
-        feeAmounts.push(feeDecimal)
-        
-        fund.feeTokens = feeTokens
-        fund.feeSymbols = feeSymbols
-        fund.feeTokensAmount = feeAmounts
-      } else {
-        // Existing fee token
-        let feeAmounts = fund.feeTokensAmount
-        feeAmounts[feeIndex] = feeAmounts[feeIndex].plus(feeDecimal)
-        fund.feeTokensAmount = feeAmounts
-      }
-    }
-    
-    fund.save()
   }
 }
 

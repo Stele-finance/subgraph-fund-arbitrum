@@ -4,7 +4,6 @@ import {
   InfoCreated as InfoCreatedEvent,
   OwnerChanged as OwnerChangedEvent,
   Join as JoinEvent,
-  UpdateShare as UpdateShareEvent,
   SteleFundInfo
 } from "../generated/SteleFundInfo/SteleFundInfo"
 import {
@@ -193,49 +192,5 @@ export function handleJoin(event: JoinEvent): void {
     investorSnapshot(fundId, managerAddress, event.params.investor, ethPriceInUSD, event)
     fundSnapshot(fundId, managerAddress, event, ethPriceInUSD)
     infoSnapshot(event)
-  }
-}
-
-export function handleUpdateShare(event: UpdateShareEvent): void {
-  // Update or create FundShare entity
-  const fundId = event.params.fundId
-  let fundShare = FundShare.load(Bytes.fromI32(fundId.toI32()))
-  if (fundShare === null) {
-    fundShare = new FundShare(Bytes.fromI32(fundId.toI32()))
-    fundShare.fundId = fundId
-  }
-  fundShare.totalShare = event.params.totalShare
-  fundShare.blockNumber = event.block.number
-  fundShare.blockTimestamp = event.block.timestamp
-  fundShare.transactionHash = event.transaction.hash
-  fundShare.save()
-
-  // Update or create InvestorShare entity
-  const investorShareId = getInvestorID(fundId, event.params.investor)
-  let investorShare = InvestorShare.load(Bytes.fromUTF8(investorShareId))
-  if (investorShare === null) {
-    investorShare = new InvestorShare(Bytes.fromUTF8(investorShareId))
-    investorShare.fundId = fundId
-    investorShare.investor = event.params.investor
-  }
-  investorShare.share = event.params.share
-  investorShare.blockNumber = event.block.number
-  investorShare.blockTimestamp = event.block.timestamp
-  investorShare.transactionHash = event.transaction.hash
-  investorShare.save()
-
-  // Update investor
-  const investorID = getInvestorID(fundId, event.params.investor)
-  let investor = Investor.load(investorID)
-  if (investor !== null) {
-    investor.share = event.params.share
-    investor.updatedAtTimestamp = event.block.timestamp
-    investor.save()
-
-    // Create snapshot
-    const ethPriceInUSD = getCachedEthPriceUSD(event.block.timestamp)
-    const managerAddress = SteleFundInfo.bind(Address.fromString(STELE_FUND_INFO_ADDRESS))
-      .manager(fundId)
-    investorSnapshot(fundId, managerAddress, event.params.investor, ethPriceInUSD, event)
   }
 }
