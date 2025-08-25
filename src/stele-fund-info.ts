@@ -14,8 +14,6 @@ import {
   Create,
   InfoCreated,
   OwnerChanged as OwnerChangedEntity,
-  FundShare,
-  InvestorShare
 } from "../generated/schema"
 import {
   STELE_FUND_INFO_ADDRESS,

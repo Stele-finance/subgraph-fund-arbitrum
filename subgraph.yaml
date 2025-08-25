@@ -64,8 +64,6 @@ dataSources:
         - InfoCreated
         - OwnerChanged
         - Join
-        - FundShare
-        - InvestorShare
       abis:
         - name: SteleFundInfo
           file: ./abis/SteleFundInfo.json
@@ -102,6 +100,8 @@ dataSources:
         - Swap
         - Withdraw
         - WithdrawFee
+        - FundShare
+        - InvestorShare
       abis:
         - name: SteleFund
           file: ./abis/SteleFund.json

@@ -1,4 +1,4 @@
-import { Address, BigInt, BigDecimal, log } from "@graphprotocol/graph-ts"
+import { Address, BigInt, BigDecimal, Bytes, log } from "@graphprotocol/graph-ts"
 import {
   Deposit as DepositEvent,
   DepositFee as DepositFeeEvent,
@@ -16,7 +16,9 @@ import {
   Swap,
   Withdraw,
   WithdrawFee,
-  Investor
+  Investor,
+  FundShare,
+  InvestorShare
 } from "../generated/schema"
 import {
   ZERO_BD,
@@ -39,6 +41,33 @@ export function handleDeposit(event: DepositEvent): void {
   entity.token = event.params.token
   entity.share = event.params.share
   entity.totalShare = event.params.totalShare
+  
+  // Update FundShare entity
+  let fundShareId = Bytes.fromHexString(event.params.fundId.toHexString())
+  let fundShare = FundShare.load(fundShareId)
+  if (fundShare === null) {
+    fundShare = new FundShare(fundShareId)
+    fundShare.fundId = event.params.fundId
+  }
+  fundShare.totalShare = event.params.totalShare
+  fundShare.blockNumber = event.block.number
+  fundShare.blockTimestamp = event.block.timestamp
+  fundShare.transactionHash = event.transaction.hash
+  fundShare.save()
+
+  // Update InvestorShare entity
+  let investorShareId = Bytes.fromHexString(event.params.fundId.toHexString() + event.params.investor.toHexString())
+  let investorShare = InvestorShare.load(investorShareId)
+  if (investorShare === null) {
+    investorShare = new InvestorShare(investorShareId)
+    investorShare.fundId = event.params.fundId
+    investorShare.investor = event.params.investor
+  }
+  investorShare.share = event.params.share
+  investorShare.blockNumber = event.block.number
+  investorShare.blockTimestamp = event.block.timestamp
+  investorShare.transactionHash = event.transaction.hash
+  investorShare.save()
   
   // Convert raw amount to formatted amount
   let tokenDecimals = fetchTokenDecimals(event.params.token, event.block.timestamp)
@@ -312,6 +341,33 @@ export function handleWithdraw(event: WithdrawEvent): void {
   entity.blockTimestamp = event.block.timestamp
   entity.transactionHash = event.transaction.hash
   entity.save()
+
+  // Update FundShare entity
+  let fundShareId = Bytes.fromHexString(event.params.fundId.toHexString())
+  let fundShare = FundShare.load(fundShareId)
+  if (fundShare === null) {
+    fundShare = new FundShare(fundShareId)
+    fundShare.fundId = event.params.fundId
+  }
+  fundShare.totalShare = event.params.totalShare
+  fundShare.blockNumber = event.block.number
+  fundShare.blockTimestamp = event.block.timestamp
+  fundShare.transactionHash = event.transaction.hash
+  fundShare.save()
+
+  // Update InvestorShare entity
+  let investorShareId = Bytes.fromHexString(event.params.fundId.toHexString() + event.params.investor.toHexString())
+  let investorShare = InvestorShare.load(investorShareId)
+  if (investorShare === null) {
+    investorShare = new InvestorShare(investorShareId)
+    investorShare.fundId = event.params.fundId
+    investorShare.investor = event.params.investor
+  }
+  investorShare.share = event.params.share
+  investorShare.blockNumber = event.block.number
+  investorShare.blockTimestamp = event.block.timestamp
+  investorShare.transactionHash = event.transaction.hash
+  investorShare.save()
 
   // Update investor share
   const fundId = event.params.fundId
