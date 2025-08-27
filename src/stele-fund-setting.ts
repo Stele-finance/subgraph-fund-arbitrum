@@ -40,7 +40,7 @@ export function handleSettingCreated(event: SettingCreatedEvent): void {
     setting = new Setting(Bytes.fromHexString(STELE_FUND_SETTING_ADDRESS))
     setting.managerFee = BigInt.fromString("10000")
     setting.minPoolAmount = BigInt.fromString(DECIMAL_18)
-    setting.maxSlippage = BigInt.fromString("500")  // Default 5%
+    setting.maxSlippage = BigInt.fromString("300")  // Default 3%
     setting.maxTokens = BigInt.fromString("10")    // Default 10 tokens
     setting.owner = Bytes.fromHexString(ADDRESS_ZERO)
     setting.save()

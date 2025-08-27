@@ -1,4 +1,4 @@
-import { Address, BigInt, BigDecimal, Bytes, log } from "@graphprotocol/graph-ts"
+import { Address, BigInt, BigDecimal, log } from "@graphprotocol/graph-ts"
 import {
   Deposit as DepositEvent,
   DepositFee as DepositFeeEvent,
@@ -43,7 +43,7 @@ export function handleDeposit(event: DepositEvent): void {
   entity.totalShare = event.params.totalShare
   
   // Update FundShare entity
-  let fundShareId = Bytes.fromHexString(event.params.fundId.toHexString())
+  let fundShareId = event.params.fundId.toString()
   let fundShare = FundShare.load(fundShareId)
   if (fundShare === null) {
     fundShare = new FundShare(fundShareId)
@@ -56,7 +56,7 @@ export function handleDeposit(event: DepositEvent): void {
   fundShare.save()
 
   // Update InvestorShare entity
-  let investorShareId = Bytes.fromHexString(event.params.fundId.toHexString() + event.params.investor.toHexString())
+  let investorShareId = event.params.fundId.toString() + "-" + event.params.investor.toHexString()
   let investorShare = InvestorShare.load(investorShareId)
   if (investorShare === null) {
     investorShare = new InvestorShare(investorShareId)
@@ -343,7 +343,7 @@ export function handleWithdraw(event: WithdrawEvent): void {
   entity.save()
 
   // Update FundShare entity
-  let fundShareId = Bytes.fromHexString(event.params.fundId.toHexString())
+  let fundShareId = event.params.fundId.toString()
   let fundShare = FundShare.load(fundShareId)
   if (fundShare === null) {
     fundShare = new FundShare(fundShareId)
@@ -356,7 +356,7 @@ export function handleWithdraw(event: WithdrawEvent): void {
   fundShare.save()
 
   // Update InvestorShare entity
-  let investorShareId = Bytes.fromHexString(event.params.fundId.toHexString() + event.params.investor.toHexString())
+  let investorShareId = event.params.fundId.toString() + "-" + event.params.investor.toHexString()
   let investorShare = InvestorShare.load(investorShareId)
   if (investorShare === null) {
     investorShare = new InvestorShare(investorShareId)

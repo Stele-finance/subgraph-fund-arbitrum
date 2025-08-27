@@ -284,11 +284,6 @@
             "internalType": "uint256",
             "name": "amountOutMinimum",
             "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "maxSlippage",
-            "type": "uint256"
           }
         ],
         "internalType": "struct ISteleFund.SwapParams[]",

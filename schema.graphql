@@ -97,7 +97,7 @@ type Join @entity(immutable: true) {
 }
 
 type FundShare @entity(immutable: false) {
-  id: Bytes!
+  id: String! # fundId
   fundId: BigInt! # uint256
   totalShare: BigInt! # uint256
   blockNumber: BigInt!
@@ -106,7 +106,7 @@ type FundShare @entity(immutable: false) {
 }
 
 type InvestorShare @entity(immutable: false) {
-  id: Bytes!
+  id: String! # fundId-investor
   fundId: BigInt! # uint256
   investor: Bytes! # address
   share: BigInt! # uint256
