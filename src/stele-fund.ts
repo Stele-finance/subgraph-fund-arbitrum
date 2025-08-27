@@ -31,6 +31,7 @@ import {
   getCachedTokenPriceETH,
 } from './util/pricing'
 import { fetchTokenSymbol, fetchTokenDecimals } from './util/token'
+import { getInvestorID } from './util/investor'
 
 export function handleDeposit(event: DepositEvent): void {
   let entity = new Deposit(
@@ -56,7 +57,7 @@ export function handleDeposit(event: DepositEvent): void {
   fundShare.save()
 
   // Update InvestorShare entity
-  let investorShareId = event.params.fundId.toString() + "-" + event.params.investor.toHexString()
+  let investorShareId = getInvestorID(event.params.fundId, event.params.investor)
   let investorShare = InvestorShare.load(investorShareId)
   if (investorShare === null) {
     investorShare = new InvestorShare(investorShareId)
@@ -111,7 +112,7 @@ export function handleDeposit(event: DepositEvent): void {
     const amountUSD = amountETH.times(ethPriceInUSD)
 
     // Update investor
-    const investorID = fundId.toString() + "-" + event.params.investor.toHexString()
+    const investorID = getInvestorID(fundId, event.params.investor)
     let investor = Investor.load(investorID)
     if (investor !== null) {
       investor.principalETH = investor.principalETH.plus(amountETH)
@@ -356,7 +357,7 @@ export function handleWithdraw(event: WithdrawEvent): void {
   fundShare.save()
 
   // Update InvestorShare entity
-  let investorShareId = event.params.fundId.toString() + "-" + event.params.investor.toHexString()
+  let investorShareId = getInvestorID(event.params.fundId, event.params.investor)
   let investorShare = InvestorShare.load(investorShareId)
   if (investorShare === null) {
     investorShare = new InvestorShare(investorShareId)
@@ -371,7 +372,7 @@ export function handleWithdraw(event: WithdrawEvent): void {
 
   // Update investor share
   const fundId = event.params.fundId
-  const investorID = fundId.toString() + "-" + event.params.investor.toHexString()
+  const investorID = getInvestorID(fundId, event.params.investor)
   let investor = Investor.load(investorID)
   if (investor !== null) {
     investor.share = event.params.share
