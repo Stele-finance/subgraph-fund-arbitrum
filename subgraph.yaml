@@ -8,9 +8,9 @@ dataSources:
     name: SteleFundSetting
     network: arbitrum-one
     source:
-      address: "0xcb3A74647ccC686a20a4f147091736215dD93AE3"
+      address: "0x1b3F77e45fF05e82413722Af0334e4d72E304A71"
       abi: SteleFundSetting
-      startBlock: 372114013
+      startBlock: 373011832
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
@@ -52,9 +52,9 @@ dataSources:
     name: SteleFundInfo
     network: arbitrum-one
     source:
-      address: "0x8A30e191BB448e5764241a04BfBb24261e9D1490"
+      address: "0x933Cd972c0f2c9A9Df5A9ae964c2bD97FFaFfb6E"
       abi: SteleFundInfo
-      startBlock: 372114022
+      startBlock: 373011846
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
@@ -87,9 +87,9 @@ dataSources:
     name: SteleFund
     network: arbitrum-one
     source:
-      address: "0xe77DC5ca8E894763118dC41658d98921Ea206e59"
+      address: "0x74B8cfED8ba7896722014F850cDD1250249f647C"
       abi: SteleFund
-      startBlock: 372114031
+      startBlock: 373011857
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
