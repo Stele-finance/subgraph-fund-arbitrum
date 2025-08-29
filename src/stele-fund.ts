@@ -1,4 +1,4 @@
-import { Address, BigInt, BigDecimal, log } from "@graphprotocol/graph-ts"
+import { Address, BigInt, BigDecimal, log, Bytes } from "@graphprotocol/graph-ts"
 import {
   Deposit as DepositEvent,
   DepositFee as DepositFeeEvent,
@@ -40,8 +40,6 @@ export function handleDeposit(event: DepositEvent): void {
   entity.fundId = event.params.fundId
   entity.investor = event.params.investor
   entity.token = event.params.token
-  entity.share = event.params.share
-  entity.totalShare = event.params.totalShare
   
   // Update FundShare entity
   let fundShareId = event.params.fundId.toString()
@@ -335,49 +333,221 @@ export function handleWithdraw(event: WithdrawEvent): void {
   )
   entity.fundId = event.params.fundId
   entity.investor = event.params.investor
-  entity.share = event.params.share
-  entity.totalShare = event.params.totalShare
+  
+  const fundId = event.params.fundId
+  const investorID = getInvestorID(fundId, event.params.investor)
+  
+  // Get current (pre-withdrawal) shares
+  let fundShare = FundShare.load(fundId.toString())
+  let investorShare = InvestorShare.load(investorID)
+  
+  // Use percentage directly from event parameters
+  let withdrawalPercentage = BigDecimal.fromString(event.params.percentage.toString())
+    .div(BigDecimal.fromString("10000")) // Assuming percentage is in basis points (10000 = 100%)
+  
+  entity.percentage = withdrawalPercentage
+  entity.amountUSD = ZERO_BD // Will be calculated based on actual withdrawn tokens
   
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
   entity.transactionHash = event.transaction.hash
   entity.save()
 
-  // Update FundShare entity
-  let fundShareId = event.params.fundId.toString()
-  let fundShare = FundShare.load(fundShareId)
-  if (fundShare === null) {
-    fundShare = new FundShare(fundShareId)
-    fundShare.fundId = event.params.fundId
+  // Update FundShare entity with post-withdrawal values
+  if (fundShare !== null) {
+    fundShare.totalShare = event.params.totalShare
+    fundShare.blockNumber = event.block.number
+    fundShare.blockTimestamp = event.block.timestamp
+    fundShare.transactionHash = event.transaction.hash
+    fundShare.save()
   }
-  fundShare.totalShare = event.params.totalShare
-  fundShare.blockNumber = event.block.number
-  fundShare.blockTimestamp = event.block.timestamp
-  fundShare.transactionHash = event.transaction.hash
-  fundShare.save()
 
-  // Update InvestorShare entity
-  let investorShareId = getInvestorID(event.params.fundId, event.params.investor)
-  let investorShare = InvestorShare.load(investorShareId)
-  if (investorShare === null) {
-    investorShare = new InvestorShare(investorShareId)
-    investorShare.fundId = event.params.fundId
-    investorShare.investor = event.params.investor
+  // Update InvestorShare entity with post-withdrawal values
+  if (investorShare !== null) {
+    investorShare.share = event.params.share
+    investorShare.blockNumber = event.block.number
+    investorShare.blockTimestamp = event.block.timestamp
+    investorShare.transactionHash = event.transaction.hash
+    investorShare.save()
   }
-  investorShare.share = event.params.share
-  investorShare.blockNumber = event.block.number
-  investorShare.blockTimestamp = event.block.timestamp
-  investorShare.transactionHash = event.transaction.hash
-  investorShare.save()
 
-  // Update investor share
-  const fundId = event.params.fundId
-  const investorID = getInvestorID(fundId, event.params.investor)
+  // Update investor share and portfolio
   let investor = Investor.load(investorID)
-  if (investor !== null) {
+  if (investor !== null && fundShare !== null) {
     investor.share = event.params.share
     investor.updatedAtTimestamp = event.block.timestamp
+    
+    // Get actual fund tokens from contract
+    let fundInfoContract = SteleFundInfo.bind(Address.fromString(STELE_FUND_INFO_ADDRESS))
+    let tokensResult = fundInfoContract.try_getFundTokens(fundId)
+    
+    if (!tokensResult.reverted && event.params.totalShare.gt(ZERO_BI)) {
+      let tokens = tokensResult.value
+      let investorRatio = BigDecimal.fromString(event.params.share.toString())
+        .div(BigDecimal.fromString(event.params.totalShare.toString()))
+      
+      // Calculate investor's current portfolio
+      let currentTokens: Array<Bytes> = []
+      let currentTokensSymbols: Array<string> = []
+      let currentTokensDecimals: Array<BigInt> = []
+      let currentTokensAmount: Array<BigDecimal> = []
+      let totalCurrentETH = ZERO_BD
+      let totalCurrentUSD = ZERO_BD
+      
+      const ethPriceInUSD = getCachedEthPriceUSD(event.block.timestamp)
+      
+      for (let i = 0; i < tokens.length; i++) {
+        let token = tokens[i]
+        let tokenAddress = Address.fromBytes(token.token)
+        let tokenDecimals = fetchTokenDecimals(tokenAddress, event.block.timestamp)
+        
+        if (tokenDecimals !== null) {
+          let decimalDivisor = exponentToBigDecimal(tokenDecimals)
+          let fundTokenAmount = BigDecimal.fromString(token.amount.toString()).div(decimalDivisor)
+          let investorTokenAmount = fundTokenAmount.times(investorRatio)
+          
+          if (investorTokenAmount.gt(ZERO_BD)) {
+            currentTokens.push(token.token)
+            currentTokensSymbols.push(fetchTokenSymbol(tokenAddress, event.block.timestamp))
+            currentTokensDecimals.push(tokenDecimals)
+            currentTokensAmount.push(investorTokenAmount)
+            
+            // Calculate ETH and USD value
+            let tokenPriceETH = getCachedTokenPriceETH(tokenAddress, event.block.timestamp)
+            if (tokenPriceETH !== null) {
+              let valueETH = investorTokenAmount.times(tokenPriceETH)
+              totalCurrentETH = totalCurrentETH.plus(valueETH)
+              totalCurrentUSD = totalCurrentUSD.plus(valueETH.times(ethPriceInUSD))
+            }
+          }
+        }
+      }
+      
+      // Update investor's current portfolio
+      investor.currentTokens = currentTokens
+      investor.currentTokensSymbols = currentTokensSymbols
+      investor.currentTokensDecimals = currentTokensDecimals
+      investor.currentTokensAmount = currentTokensAmount
+      investor.currentETH = totalCurrentETH
+      investor.currentUSD = totalCurrentUSD
+      
+      // Calculate profit
+      investor.profitETH = totalCurrentETH.minus(investor.principalETH)
+      investor.profitUSD = totalCurrentUSD.minus(investor.principalUSD)
+      if (investor.principalUSD.gt(ZERO_BD)) {
+        investor.profitRatio = investor.profitUSD.div(investor.principalUSD)
+      } else {
+        investor.profitRatio = ZERO_BD
+      }
+    }
+    
     investor.save()
+  }
+
+  // Update Fund entity with actual contract data
+  let fund = Fund.load(fundId.toString())
+  if (fund !== null) {
+    // Get actual fund tokens from contract
+    let fundInfoContract = SteleFundInfo.bind(Address.fromString(STELE_FUND_INFO_ADDRESS))
+    let tokensResult = fundInfoContract.try_getFundTokens(fundId)
+    
+    if (!tokensResult.reverted) {
+      let tokens = tokensResult.value
+      let fundCurrentTokens: Array<Bytes> = []
+      let fundCurrentTokensSymbols: Array<string> = []
+      let fundCurrentTokensDecimals: Array<BigInt> = []
+      let fundCurrentTokensAmount: Array<BigDecimal> = []
+      let fundTotalETH = ZERO_BD
+      let fundTotalUSD = ZERO_BD
+      
+      const ethPriceInUSD = getCachedEthPriceUSD(event.block.timestamp)
+      
+      for (let i = 0; i < tokens.length; i++) {
+        let token = tokens[i]
+        let tokenAddress = Address.fromBytes(token.token)
+        let tokenDecimals = fetchTokenDecimals(tokenAddress, event.block.timestamp)
+        
+        if (tokenDecimals !== null) {
+          let decimalDivisor = exponentToBigDecimal(tokenDecimals)
+          let tokenAmount = BigDecimal.fromString(token.amount.toString()).div(decimalDivisor)
+          
+          if (tokenAmount.gt(ZERO_BD)) {
+            fundCurrentTokens.push(token.token)
+            fundCurrentTokensSymbols.push(fetchTokenSymbol(tokenAddress, event.block.timestamp))
+            fundCurrentTokensDecimals.push(tokenDecimals)
+            fundCurrentTokensAmount.push(tokenAmount)
+            
+            // Calculate ETH and USD value
+            let tokenPriceETH = getCachedTokenPriceETH(tokenAddress, event.block.timestamp)
+            if (tokenPriceETH !== null) {
+              let valueETH = tokenAmount.times(tokenPriceETH)
+              fundTotalETH = fundTotalETH.plus(valueETH)
+              fundTotalUSD = fundTotalUSD.plus(valueETH.times(ethPriceInUSD))
+            }
+          }
+        }
+      }
+      
+      // Update fund with actual contract data
+      fund.currentTokens = fundCurrentTokens
+      fund.currentTokensSymbols = fundCurrentTokensSymbols
+      fund.currentTokensDecimals = fundCurrentTokensDecimals
+      fund.currentTokensAmount = fundCurrentTokensAmount
+      fund.currentETH = fundTotalETH
+      fund.currentUSD = fundTotalUSD
+    }
+    
+    fund.updatedAtTimestamp = event.block.timestamp
+    fund.save()
+  }
+  
+  // Calculate withdrawn amount USD based on actual tokens withdrawn
+  if (withdrawalPercentage.gt(ZERO_BD)) {
+    let totalWithdrawnUSD = ZERO_BD
+    let totalWithdrawnETH = ZERO_BD
+    const ethPriceInUSD = getCachedEthPriceUSD(event.block.timestamp)
+    
+    // Get pre-withdrawal fund tokens to calculate withdrawn amounts
+    let fundInfoContract = SteleFundInfo.bind(Address.fromString(STELE_FUND_INFO_ADDRESS))
+    let preWithdrawTokensResult = fundInfoContract.try_getFundTokens(fundId)
+    
+    if (!preWithdrawTokensResult.reverted) {
+      let preWithdrawTokens = preWithdrawTokensResult.value
+      
+      // Calculate withdrawn amount for each token
+      for (let i = 0; i < preWithdrawTokens.length; i++) {
+        let token = preWithdrawTokens[i]
+        let tokenAddress = Address.fromBytes(token.token)
+        let tokenDecimals = fetchTokenDecimals(tokenAddress, event.block.timestamp)
+        
+        if (tokenDecimals !== null) {
+          let decimalDivisor = exponentToBigDecimal(tokenDecimals)
+          // Pre-withdrawal amount (from historical data or calculation)
+          let preWithdrawAmount = BigDecimal.fromString(token.amount.toString()).div(decimalDivisor)
+          // Calculate withdrawn amount based on percentage
+          let withdrawnAmount = preWithdrawAmount.times(withdrawalPercentage).div(BigDecimal.fromString("1").minus(withdrawalPercentage))
+          
+          // Calculate ETH and USD value of withdrawn tokens
+          let tokenPriceETH = getCachedTokenPriceETH(tokenAddress, event.block.timestamp)
+          if (tokenPriceETH !== null) {
+            let valueETH = withdrawnAmount.times(tokenPriceETH)
+            totalWithdrawnETH = totalWithdrawnETH.plus(valueETH)
+            totalWithdrawnUSD = totalWithdrawnUSD.plus(valueETH.times(ethPriceInUSD))
+          }
+        }
+      }
+    }
+    
+    // Update the Withdraw entity with calculated USD amount
+    entity.amountUSD = totalWithdrawnUSD
+    entity.save()
+    
+    // Update investor's principal (subtract withdrawn amount)
+    if (investor !== null) {
+      investor.principalETH = investor.principalETH.minus(totalWithdrawnETH)
+      investor.principalUSD = investor.principalUSD.minus(totalWithdrawnUSD)
+      investor.save()
+    }
   }
 }
 

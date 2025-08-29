@@ -20,7 +20,6 @@ import {
 import { 
   STELE_FUND_SETTING_ADDRESS,
   ADDRESS_ZERO,
-  DECIMAL_18,
   WETH,
   USDC,
 } from './util/constants'
@@ -39,7 +38,6 @@ export function handleSettingCreated(event: SettingCreatedEvent): void {
   if (setting === null) {
     setting = new Setting(Bytes.fromHexString(STELE_FUND_SETTING_ADDRESS))
     setting.managerFee = BigInt.fromString("10000")
-    setting.minPoolAmount = BigInt.fromString(DECIMAL_18)
     setting.maxSlippage = BigInt.fromString("300")  // Default 3%
     setting.maxTokens = BigInt.fromString("10")    // Default 10 tokens
     setting.owner = Bytes.fromHexString(ADDRESS_ZERO)

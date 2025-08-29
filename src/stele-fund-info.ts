@@ -1,4 +1,4 @@
-import { Address, Bytes, log } from "@graphprotocol/graph-ts"
+import { Address, Bytes } from "@graphprotocol/graph-ts"
 import {
   Create as CreateEvent,
   InfoCreated as InfoCreatedEvent,

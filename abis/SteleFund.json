@@ -154,6 +154,12 @@
       {
         "indexed": false,
         "internalType": "uint256",
+        "name": "percentage",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
         "name": "share",
         "type": "uint256"
       },

@@ -5,8 +5,6 @@ type Deposit @entity(immutable: true) {
   token: Bytes! # address
   symbol: String!
   amount: BigDecimal! # formatted amount (not raw)
-  share: BigInt! # uint256
-  totalShare: BigInt! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -43,8 +41,8 @@ type Withdraw @entity(immutable: true) {
   id: Bytes!
   fundId: BigInt! # uint256
   investor: Bytes! # address
-  share: BigInt! # uint256
-  totalShare: BigInt! # uint256
+  percentage: BigDecimal! # withdrawal percentage
+  amountUSD: BigDecimal! # USD value of the withdrawal
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -252,7 +250,6 @@ type Investor @entity(immutable: false) {
 type Setting @entity(immutable: false) {
   id: Bytes!
   managerFee: BigInt!
-  minPoolAmount: BigInt!
   maxSlippage: BigInt!
   maxTokens: BigInt!
   owner: Bytes!
