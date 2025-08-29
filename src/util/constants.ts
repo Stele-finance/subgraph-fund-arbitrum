@@ -26,6 +26,7 @@ export const TOKEN_INFO_CACHE_DURATION = 604800 // 1 week
 export const UNKNOWN = 'Unknown'
 export const DECIMAL_18 = '1000000000000000000'
 export const DECIMAL_6 = '1000000'
+export const USDC_DECIMALS = BigDecimal.fromString(DECIMAL_6) // 10^6 for USDC decimals
 
 // Transaction types
 export const TYPE_DEPOSIT = 'DEPOSIT'

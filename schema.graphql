@@ -203,8 +203,7 @@ type Info @entity(immutable: false) {
   id: Bytes!
   fundCount: BigInt!
   investorCount: BigInt!
-  totalCurrentETH: BigDecimal!
-  totalCurrentUSD: BigDecimal!
+  totalAmountUSD: BigDecimal!
   owner: Bytes!
 }
 
@@ -215,15 +214,17 @@ type Fund @entity(immutable: false) {
   updatedAtTimestamp: BigInt!
   manager: Bytes!
   investorCount: BigInt!
-  currentETH: BigDecimal!
-  currentUSD: BigDecimal!
+  share: BigInt!
+  amountUSD: BigDecimal!
+  profitUSD: BigDecimal!
+  profitRatio: BigDecimal!
   feeTokens: [Bytes!]!
   feeSymbols: [String!]!
   feeTokensAmount: [BigDecimal!]!
-  currentTokens: [Bytes!]!
-  currentTokensSymbols: [String!]!
-  currentTokensDecimals: [BigInt!]!
-  currentTokensAmount: [BigDecimal!]!
+  tokens: [Bytes!]!
+  tokensSymbols: [String!]!
+  tokensDecimals: [BigInt!]!
+  tokensAmount: [BigDecimal!]!
 }
 
 type Investor @entity(immutable: false) {
@@ -234,17 +235,13 @@ type Investor @entity(immutable: false) {
   investor: Bytes!
   isManager: Boolean!
   share: BigInt
-  principalETH: BigDecimal!
-  principalUSD: BigDecimal!
-  currentETH: BigDecimal!
-  currentUSD: BigDecimal!
-  currentTokens: [Bytes!]!
-  currentTokensSymbols: [String!]!
-  currentTokensDecimals: [BigInt!]!
-  currentTokensAmount: [BigDecimal!]!
-  profitETH: BigDecimal!
+  amountUSD: BigDecimal!
   profitUSD: BigDecimal!
   profitRatio: BigDecimal!
+  tokens: [Bytes!]!
+  tokensSymbols: [String!]!
+  tokensDecimals: [BigInt!]!
+  tokensAmount: [BigDecimal!]!
 }
 
 type Setting @entity(immutable: false) {
@@ -270,8 +267,7 @@ type InfoSnapshot @entity(immutable: true) {
   date: Int!
   fundCount: BigInt!
   investorCount: BigInt!
-  totalCurrentETH: BigDecimal!
-  totalCurrentUSD: BigDecimal!
+  totalAmountUSD: BigDecimal!
 }
 
 type FundSnapshot @entity(immutable: true) {
@@ -280,14 +276,15 @@ type FundSnapshot @entity(immutable: true) {
   fundId: String!
   manager: Bytes!
   investorCount: BigInt!
-  currentETH: BigDecimal!
-  currentUSD: BigDecimal!
-  currentTokens: [Bytes!]!
-  currentTokensSymbols: [String!]!
-  currentTokensDecimals: [BigInt!]!
-  currentTokensAmount: [BigDecimal!]!
-  currentTokensAmountETH: [BigDecimal!]!
-  currentTokensAmountUSD: [BigDecimal!]!
+  share: BigInt!
+  amountUSD: BigDecimal!
+  profitUSD: BigDecimal!
+  profitRatio: BigDecimal!
+  tokens: [Bytes!]!
+  tokensSymbols: [String!]!
+  tokensDecimals: [BigInt!]!
+  tokensAmount: [BigDecimal!]!
+  tokensAmountUSD: [BigDecimal!]!
 }
 
 type InvestorSnapshot @entity(immutable: true) {
@@ -296,13 +293,12 @@ type InvestorSnapshot @entity(immutable: true) {
   fundId: String!
   manager: Bytes!
   investor: Bytes!
-  principalETH: BigDecimal!
-  principalUSD: BigDecimal!
+  share: BigInt!
+  amountUSD: BigDecimal!
+  profitUSD: BigDecimal!
+  profitRatio: BigDecimal!
   tokens: [Bytes!]!
   tokensSymbols: [String!]!
   tokensDecimals: [BigInt!]!
-  tokensAmountETH: [BigDecimal!]!
   tokensAmountUSD: [BigDecimal!]!
-  currentETH: BigDecimal!
-  currentUSD: BigDecimal!
 }

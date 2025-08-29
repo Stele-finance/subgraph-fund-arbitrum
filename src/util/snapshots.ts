@@ -7,7 +7,7 @@ import {
   Fund,
   Investor
 } from '../../generated/schema'
-import { STELE_FUND_INFO_ADDRESS, ZERO_BD } from './constants'
+import { STELE_FUND_INFO_ADDRESS, ZERO_BD, ZERO_BI } from './constants'
 
 export function infoSnapshot(event: ethereum.Event): void {
   let info = Info.load(Bytes.fromHexString(STELE_FUND_INFO_ADDRESS))
@@ -25,8 +25,7 @@ export function infoSnapshot(event: ethereum.Event): void {
   snapshot.date = dayID * 86400
   snapshot.fundCount = info.fundCount
   snapshot.investorCount = info.investorCount
-  snapshot.totalCurrentETH = info.totalCurrentETH
-  snapshot.totalCurrentUSD = info.totalCurrentUSD
+  snapshot.totalAmountUSD = info.totalAmountUSD
   snapshot.save()
 }
 
@@ -47,25 +46,23 @@ export function fundSnapshot(
   snapshot.fundId = fundId.toString()
   snapshot.manager = manager
   snapshot.investorCount = fund.investorCount
-  snapshot.currentETH = fund.currentETH
-  snapshot.currentUSD = fund.currentUSD
-  snapshot.currentTokens = fund.currentTokens
-  snapshot.currentTokensSymbols = fund.currentTokensSymbols
-  snapshot.currentTokensDecimals = fund.currentTokensDecimals
-  snapshot.currentTokensAmount = fund.currentTokensAmount
+  snapshot.share = fund.share
+  snapshot.amountUSD = fund.amountUSD
+  snapshot.profitUSD = fund.profitUSD
+  snapshot.profitRatio = fund.profitRatio
+  snapshot.tokens = fund.tokens
+  snapshot.tokensSymbols = fund.tokensSymbols
+  snapshot.tokensDecimals = fund.tokensDecimals
+  snapshot.tokensAmount = fund.tokensAmount
   
-  // Calculate ETH and USD amounts for each token
-  let tokensAmountETH: BigDecimal[] = []
+  // Calculate USD amounts for each token
   let tokensAmountUSD: BigDecimal[] = []
   
-  for (let i = 0; i < fund.currentTokens.length; i++) {
+  for (let i = 0; i < fund.tokens.length; i++) {
     // This is simplified - in production you'd calculate actual token values
-    tokensAmountETH.push(ZERO_BD)
     tokensAmountUSD.push(ZERO_BD)
   }
-  
-  snapshot.currentTokensAmountETH = tokensAmountETH
-  snapshot.currentTokensAmountUSD = tokensAmountUSD
+  snapshot.tokensAmountUSD = tokensAmountUSD
   snapshot.save()
 }
 
@@ -73,7 +70,6 @@ export function investorSnapshot(
   fundId: BigInt,
   manager: Address,
   investor: Address,
-  ethPriceInUSD: BigDecimal,
   event: ethereum.Event
 ): void {
   let investorID = fundId.toString() + '-' + investor.toHexString()
@@ -88,27 +84,28 @@ export function investorSnapshot(
   snapshot.fundId = fundId.toString()
   snapshot.manager = manager
   snapshot.investor = investor
-  snapshot.principalETH = investorEntity.principalETH
-  snapshot.principalUSD = investorEntity.principalUSD
-  snapshot.currentETH = investorEntity.currentETH
-  snapshot.currentUSD = investorEntity.currentUSD
+  // Note: InvestorSnapshot now has share, amountUSD, profitUSD, profitRatio
+  if (investorEntity.share) {
+    snapshot.share = investorEntity.share!
+  } else {
+    snapshot.share = ZERO_BI
+  }
+  snapshot.amountUSD = investorEntity.amountUSD
+  snapshot.profitUSD = investorEntity.profitUSD
+  snapshot.profitRatio = investorEntity.profitRatio
   
   // Set token arrays
-  snapshot.tokens = investorEntity.currentTokens
-  snapshot.tokensSymbols = investorEntity.currentTokensSymbols
-  snapshot.tokensDecimals = investorEntity.currentTokensDecimals
+  snapshot.tokens = investorEntity.tokens
+  snapshot.tokensSymbols = investorEntity.tokensSymbols
+  snapshot.tokensDecimals = investorEntity.tokensDecimals
   
-  // Calculate ETH and USD amounts for each token
-  let tokensAmountETH: BigDecimal[] = []
+  // Calculate USD amounts for each token
   let tokensAmountUSD: BigDecimal[] = []
   
-  for (let i = 0; i < investorEntity.currentTokens.length; i++) {
+  for (let i = 0; i < investorEntity.tokens.length; i++) {
     // This is simplified - in production you'd calculate actual token values
-    tokensAmountETH.push(ZERO_BD)
     tokensAmountUSD.push(ZERO_BD)
   }
-  
-  snapshot.tokensAmountETH = tokensAmountETH
   snapshot.tokensAmountUSD = tokensAmountUSD
   snapshot.save()
 }

@@ -57,15 +57,17 @@ export function handleCreate(event: CreateEvent): void {
   fund.updatedAtTimestamp = event.block.timestamp
   fund.manager = event.params.manager
   fund.investorCount = ONE_BI
-  fund.currentETH = ZERO_BD
-  fund.currentUSD = ZERO_BD
+  fund.share = ZERO_BI
+  fund.amountUSD = ZERO_BD
+  fund.profitUSD = ZERO_BD
+  fund.profitRatio = ZERO_BD
   fund.feeTokens = []
   fund.feeSymbols = []
   fund.feeTokensAmount = []
-  fund.currentTokens = []
-  fund.currentTokensSymbols = []
-  fund.currentTokensDecimals = []
-  fund.currentTokensAmount = []
+  fund.tokens = []
+  fund.tokensSymbols = []
+  fund.tokensDecimals = []
+  fund.tokensAmount = []
   fund.save()
 
   const investorID = getInvestorID(event.params.fundId, event.params.manager)
@@ -77,15 +79,11 @@ export function handleCreate(event: CreateEvent): void {
     investor.fundId = event.params.fundId.toString()
     investor.investor = event.params.manager
     investor.isManager = true
-    investor.principalETH = ZERO_BD
-    investor.principalUSD = ZERO_BD
-    investor.currentETH = ZERO_BD
-    investor.currentUSD = ZERO_BD
-    investor.currentTokens = []
-    investor.currentTokensSymbols = []
-    investor.currentTokensDecimals = []
-    investor.currentTokensAmount = []
-    investor.profitETH = ZERO_BD
+    investor.amountUSD = ZERO_BD
+    investor.tokens = []
+    investor.tokensSymbols = []
+    investor.tokensDecimals = []
+    investor.tokensAmount = []
     investor.profitUSD = ZERO_BD
     investor.profitRatio = ZERO_BD
   }
@@ -95,7 +93,7 @@ export function handleCreate(event: CreateEvent): void {
   const ethPriceInUSD = getCachedEthPriceUSD(event.block.timestamp)
   infoSnapshot(event)
   fundSnapshot(event.params.fundId, event.params.manager, event, ethPriceInUSD)
-  investorSnapshot(event.params.fundId, event.params.manager, event.params.manager, ethPriceInUSD, event)
+  investorSnapshot(event.params.fundId, event.params.manager, event.params.manager, event)
 }
 
 export function handleInfoCreated(event: InfoCreatedEvent): void {
@@ -112,8 +110,7 @@ export function handleInfoCreated(event: InfoCreatedEvent): void {
     info = new Info(Bytes.fromHexString(STELE_FUND_INFO_ADDRESS))
     info.fundCount = ZERO_BI
     info.investorCount = ZERO_BI
-    info.totalCurrentETH = ZERO_BD
-    info.totalCurrentUSD = ZERO_BD
+    info.totalAmountUSD = ZERO_BD
     info.owner = Bytes.fromHexString(ADDRESS_ZERO)
     info.save()
   }
@@ -166,15 +163,11 @@ export function handleJoin(event: JoinEvent): void {
       investor.fundId = fundId.toString()
       investor.investor = event.params.investor
       investor.isManager = false
-      investor.principalETH = ZERO_BD
-      investor.principalUSD = ZERO_BD
-      investor.currentETH = ZERO_BD
-      investor.currentUSD = ZERO_BD
-      investor.currentTokens = []
-      investor.currentTokensSymbols = []
-      investor.currentTokensDecimals = []
-      investor.currentTokensAmount = []
-      investor.profitETH = ZERO_BD
+      investor.amountUSD = ZERO_BD
+      investor.tokens = []
+      investor.tokensSymbols = []
+      investor.tokensDecimals = []
+      investor.tokensAmount = []
       investor.profitUSD = ZERO_BD
       investor.profitRatio = ZERO_BD  
     }
@@ -187,7 +180,7 @@ export function handleJoin(event: JoinEvent): void {
     const ethPriceInUSD = getCachedEthPriceUSD(event.block.timestamp)
     const managerAddress = SteleFundInfo.bind(Address.fromString(STELE_FUND_INFO_ADDRESS))
       .manager(fundId)
-    investorSnapshot(fundId, managerAddress, event.params.investor, ethPriceInUSD, event)
+    investorSnapshot(fundId, managerAddress, event.params.investor, event)
     fundSnapshot(fundId, managerAddress, event, ethPriceInUSD)
     infoSnapshot(event)
   }
