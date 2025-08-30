@@ -13,20 +13,20 @@ export function infoSnapshot(event: ethereum.Event): void {
   let info = Info.load(Bytes.fromHexString(STELE_FUND_INFO_ADDRESS))
   if (!info) return
   
-  // Create daily snapshot ID based on timestamp
-  let dayID = event.block.timestamp.toI32() / 86400
+  // Create daily snapshot ID based on timestamp  
+  let timestamp = event.block.timestamp.toI32()
+  let dayID = timestamp / 86400
   let snapshotID = dayID.toString()
   
   let snapshot = InfoSnapshot.load(snapshotID)
-  if (!snapshot) {
+  if (snapshot == null) {
     snapshot = new InfoSnapshot(snapshotID)
+    snapshot.date = dayID * 86400
+    snapshot.fundCount = info.fundCount
+    snapshot.investorCount = info.investorCount
+    snapshot.totalAmountUSD = info.totalAmountUSD
+    snapshot.save()
   }
-  
-  snapshot.date = dayID * 86400
-  snapshot.fundCount = info.fundCount
-  snapshot.investorCount = info.investorCount
-  snapshot.totalAmountUSD = info.totalAmountUSD
-  snapshot.save()
 }
 
 export function fundSnapshot(

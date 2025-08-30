@@ -1,4 +1,4 @@
-import { Bytes, BigInt } from "@graphprotocol/graph-ts"
+import { Bytes, BigInt, Address } from "@graphprotocol/graph-ts"
 import {
   SettingCreated as SettingCreatedEvent,
   ManagerFeeChanged as ManagerFeeChangedEvent,
@@ -7,6 +7,7 @@ import {
   OwnerChanged as OwnerChangedEvent,
   AddToken as AddTokenEvent,
   RemoveToken as RemoveTokenEvent,
+  SteleFundSetting
 } from "../generated/SteleFundSetting/SteleFundSetting"
 import {
   SettingCreated,
@@ -37,10 +38,13 @@ export function handleSettingCreated(event: SettingCreatedEvent): void {
   let setting = Setting.load(Bytes.fromHexString(STELE_FUND_SETTING_ADDRESS))
   if (setting === null) {
     setting = new Setting(Bytes.fromHexString(STELE_FUND_SETTING_ADDRESS))
-    setting.managerFee = BigInt.fromString("10000")
-    setting.maxSlippage = BigInt.fromString("300")  // Default 3%
-    setting.maxTokens = BigInt.fromString("10")    // Default 10 tokens
-    setting.owner = Bytes.fromHexString(ADDRESS_ZERO)
+    
+    // Fetch values from contract
+    let contract = SteleFundSetting.bind(Address.fromString(STELE_FUND_SETTING_ADDRESS))
+    setting.managerFee = contract.managerFee()
+    setting.maxSlippage = contract.maxSlippage()
+    setting.maxTokens = contract.maxTokens()
+    setting.owner = contract.owner()
     setting.save()
   }
   

@@ -69,6 +69,19 @@
   },
   {
     "inputs": [],
+    "name": "MAX_FUNDS_PER_INVESTOR",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "create",
     "outputs": [
       {
@@ -156,7 +169,7 @@
         "type": "uint256"
       }
     ],
-    "name": "decreaseInvestorShare",
+    "name": "decreaseShare",
     "outputs": [
       {
         "internalType": "uint256",
@@ -204,6 +217,25 @@
   {
     "inputs": [],
     "name": "fundIdCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "fundShares",
     "outputs": [
       {
         "internalType": "uint256",
@@ -304,6 +336,25 @@
         "internalType": "uint256",
         "name": "fundId",
         "type": "uint256"
+      }
+    ],
+    "name": "getFundShare",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "fundId",
+        "type": "uint256"
       },
       {
         "internalType": "address",
@@ -356,25 +407,6 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "investor",
-        "type": "address"
-      }
-    ],
-    "name": "getInvestingFunds",
-    "outputs": [
-      {
-        "internalType": "uint256[]",
-        "name": "",
-        "type": "uint256[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "uint256",
         "name": "fundId",
         "type": "uint256"
@@ -386,49 +418,6 @@
       }
     ],
     "name": "getInvestorShare",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "fundId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "investor",
-        "type": "address"
-      }
-    ],
-    "name": "getInvestorSharePercentage",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "fundId",
-        "type": "uint256"
-      }
-    ],
-    "name": "getTotalFundValue",
     "outputs": [
       {
         "internalType": "uint256",
@@ -503,7 +492,7 @@
         "type": "uint256"
       }
     ],
-    "name": "increaseInvestorShare",
+    "name": "increaseShare",
     "outputs": [
       {
         "internalType": "uint256",
@@ -685,25 +674,6 @@
     "name": "setOwner",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "totalFundShares",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   }
 ]

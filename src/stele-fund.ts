@@ -1,7 +1,6 @@
 import { Address, BigInt, BigDecimal, log, Bytes } from "@graphprotocol/graph-ts"
 import {
   Deposit as DepositEvent,
-  DepositFee as DepositFeeEvent,
   Swap as SwapEvent,
   Withdraw as WithdrawEvent,
   WithdrawFee as WithdrawFeeEvent,
@@ -12,7 +11,6 @@ import {
 import {
   Fund,
   Deposit,
-  DepositFee,
   Swap,
   Withdraw,
   WithdrawFee,
@@ -49,7 +47,7 @@ export function handleDeposit(event: DepositEvent): void {
     fundShare = new FundShare(fundShareId)
     fundShare.fundId = event.params.fundId
   }
-  fundShare.totalShare = event.params.totalShare
+  fundShare.totalShare = event.params.fundShare
   fundShare.blockNumber = event.block.number
   fundShare.blockTimestamp = event.block.timestamp
   fundShare.transactionHash = event.transaction.hash
@@ -63,7 +61,7 @@ export function handleDeposit(event: DepositEvent): void {
     investorShare.fundId = event.params.fundId
     investorShare.investor = event.params.investor
   }
-  investorShare.share = event.params.share
+  investorShare.share = event.params.investorShare
   investorShare.blockNumber = event.block.number
   investorShare.blockTimestamp = event.block.timestamp
   investorShare.transactionHash = event.transaction.hash
@@ -187,7 +185,7 @@ export function handleDeposit(event: DepositEvent): void {
     let fund = Fund.load(fundId.toString())
     if (fund !== null) {
       // Update share with FundShare totalShare (USDC raw amount)
-      fund.share = event.params.totalShare
+      fund.share = event.params.fundShare
       fund.amountUSD = fund.amountUSD.plus(amountUSD)
       
       // Calculate Fund profit: current USD value - principal (share is USDC raw)
@@ -240,39 +238,47 @@ export function handleDeposit(event: DepositEvent): void {
         fund.tokensAmount = amounts
       }
       
+      // Add manager fee to fund's fee tokens if managerFee > 0
+      if (event.params.managerFee.gt(ZERO_BI) && tokenDecimals !== null) {
+        let tokenDecimalDivisor = exponentToBigDecimal(tokenDecimals)
+        let managerFeeDecimal = BigDecimal.fromString(event.params.managerFee.toString())
+          .div(tokenDecimalDivisor)
+        
+        // Check if fee token already exists
+        let feeTokenIndex = -1
+        for (let i = 0; i < fund.feeTokens.length; i++) {
+          if (fund.feeTokens[i].equals(tokenAddress)) {
+            feeTokenIndex = i
+            break
+          }
+        }
+        
+        if (feeTokenIndex === -1) {
+          // New fee token
+          let feeTokens = fund.feeTokens
+          let feeSymbols = fund.feeSymbols
+          let feeAmounts = fund.feeTokensAmount
+          
+          feeTokens.push(tokenAddress)
+          feeSymbols.push(fetchTokenSymbol(tokenAddress, event.block.timestamp))
+          feeAmounts.push(managerFeeDecimal)
+          
+          fund.feeTokens = feeTokens
+          fund.feeSymbols = feeSymbols
+          fund.feeTokensAmount = feeAmounts
+        } else {
+          // Existing fee token
+          let feeAmounts = fund.feeTokensAmount
+          feeAmounts[feeTokenIndex] = feeAmounts[feeTokenIndex].plus(managerFeeDecimal)
+          fund.feeTokensAmount = feeAmounts
+        }
+      }
+      
       fund.save()
     }
   }
 }
 
-export function handleDepositFee(event: DepositFeeEvent): void {
-  let entity = new DepositFee(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.fundId = event.params.fundId
-  entity.manager = event.params.investor  // In SteleFund contract, the second param is still 'investor' but it's actually the manager
-  entity.token = event.params.token
-  
-  // Convert raw amount to formatted amount
-  let tokenDecimals = fetchTokenDecimals(event.params.token, event.block.timestamp)
-  if (tokenDecimals !== null) {
-    let decimalDivisor = exponentToBigDecimal(tokenDecimals)
-    let formattedAmount = BigDecimal.fromString(event.params.amount.toString())
-      .div(decimalDivisor)
-    entity.amount = formattedAmount
-  } else {
-    log.warning('[DEPOSIT_FEE] Failed to get decimals for token: {}', [event.params.token.toHexString()])
-    entity.amount = BigDecimal.fromString("0")
-  }
-  
-  // Fetch token symbol
-  entity.symbol = fetchTokenSymbol(event.params.token, event.block.timestamp)
-  
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-  entity.save()
-}
 
 export function handleSwap(event: SwapEvent): void {
   let entity = new Swap(
@@ -535,7 +541,7 @@ export function handleWithdraw(event: WithdrawEvent): void {
 
   // Update FundShare entity with post-withdrawal values
   if (fundShare !== null) {
-    fundShare.totalShare = event.params.totalShare
+    fundShare.totalShare = event.params.fundShare
     fundShare.blockNumber = event.block.number
     fundShare.blockTimestamp = event.block.timestamp
     fundShare.transactionHash = event.transaction.hash
@@ -544,7 +550,7 @@ export function handleWithdraw(event: WithdrawEvent): void {
 
   // Update InvestorShare entity with post-withdrawal values
   if (investorShare !== null) {
-    investorShare.share = event.params.share
+    investorShare.share = event.params.investorShare
     investorShare.blockNumber = event.block.number
     investorShare.blockTimestamp = event.block.timestamp
     investorShare.transactionHash = event.transaction.hash
@@ -554,17 +560,17 @@ export function handleWithdraw(event: WithdrawEvent): void {
   // Update investor share and portfolio
   let investor = Investor.load(investorID)
   if (investor !== null && fundShare !== null) {
-    investor.share = event.params.share
+    investor.share = event.params.investorShare
     investor.updatedAtTimestamp = event.block.timestamp
     
     // Get actual fund tokens from contract
     let fundInfoContract = SteleFundInfo.bind(Address.fromString(STELE_FUND_INFO_ADDRESS))
     let tokensResult = fundInfoContract.try_getFundTokens(fundId)
     
-    if (!tokensResult.reverted && event.params.totalShare.gt(ZERO_BI)) {
+    if (!tokensResult.reverted && event.params.fundShare.gt(ZERO_BI)) {
       let fundTokens = tokensResult.value
-      let investorRatio = BigDecimal.fromString(event.params.share.toString())
-        .div(BigDecimal.fromString(event.params.totalShare.toString()))
+      let investorRatio = BigDecimal.fromString(event.params.investorShare.toString())
+        .div(BigDecimal.fromString(event.params.fundShare.toString()))
       
       // Calculate investor's current portfolio
       let tokens: Array<Bytes> = []
@@ -609,7 +615,7 @@ export function handleWithdraw(event: WithdrawEvent): void {
       investor.amountUSD = totalCurrentUSD
       
       // Update investor share
-      investor.share = event.params.share
+      investor.share = event.params.investorShare
       
       // Calculate profit: current USD value - principal (share in USDC raw)
       if (investor.share && investor.share!.gt(ZERO_BI)) {
@@ -646,7 +652,7 @@ export function handleWithdraw(event: WithdrawEvent): void {
   // Update Fund entity with actual contract data (post-withdrawal)
   if (fund !== null) {
     // Update share with FundShare totalShare (USDC raw amount)
-    fund.share = event.params.totalShare
+    fund.share = event.params.fundShare
     // Get actual fund tokens from contract (post-withdrawal state)
     let fundInfoContract = SteleFundInfo.bind(Address.fromString(STELE_FUND_INFO_ADDRESS))
     let tokensResult = fundInfoContract.try_getFundTokens(fundId)
@@ -776,29 +782,46 @@ export function handleWithdrawFee(event: WithdrawFeeEvent): void {
   entity.blockTimestamp = event.block.timestamp
   entity.transactionHash = event.transaction.hash
   entity.save()
-  
-  const fundId = event.params.fundId
-  let fund = Fund.load(fundId.toString())
-  if (fund !== null) {
-    // Remove from fee tokens
+
+  // Update fund's fee tracking arrays
+  let fund = Fund.load(event.params.fundId.toString())
+  if (fund !== null && tokenDecimals !== null) {
+    let tokenDecimalDivisor = exponentToBigDecimal(tokenDecimals)
+    let withdrawFeeDecimal = BigDecimal.fromString(event.params.amount.toString())
+      .div(tokenDecimalDivisor)
+    
+    // Check if fee token already exists
+    let feeTokenIndex = -1
     for (let i = 0; i < fund.feeTokens.length; i++) {
       if (fund.feeTokens[i].equals(event.params.token)) {
-        let feeTokens = fund.feeTokens
-        let feeSymbols = fund.feeSymbols
-        let feeAmounts = fund.feeTokensAmount
-        
-        feeTokens.splice(i, 1)
-        feeSymbols.splice(i, 1)
-        feeAmounts.splice(i, 1)
-        
-        fund.feeTokens = feeTokens
-        fund.feeSymbols = feeSymbols
-        fund.feeTokensAmount = feeAmounts
+        feeTokenIndex = i
         break
       }
     }
     
-    fund.updatedAtTimestamp = event.block.timestamp
+    if (feeTokenIndex === -1) {
+      // Fee token not found, log warning since we're trying to withdraw fee that doesn't exist
+      log.warning('[WITHDRAW_FEE] Fee token not found in fund: {}', [event.params.token.toHexString()])
+    } else {
+      // Existing fee token - decrease the amount
+      let feeAmounts = fund.feeTokensAmount
+      feeAmounts[feeTokenIndex] = feeAmounts[feeTokenIndex].minus(withdrawFeeDecimal)
+      
+      // If fee amount becomes zero or negative, remove the fee token
+      if (feeAmounts[feeTokenIndex].le(ZERO_BD)) {
+        let feeTokens = fund.feeTokens
+        let feeSymbols = fund.feeSymbols
+        
+        feeTokens.splice(feeTokenIndex, 1)
+        feeSymbols.splice(feeTokenIndex, 1)
+        feeAmounts.splice(feeTokenIndex, 1)
+        
+        fund.feeTokens = feeTokens
+        fund.feeSymbols = feeSymbols
+      }
+      fund.feeTokensAmount = feeAmounts
+    }
+    
     fund.save()
   }
 }
