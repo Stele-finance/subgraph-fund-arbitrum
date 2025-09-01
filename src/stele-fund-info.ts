@@ -23,12 +23,15 @@ import {
   ADDRESS_ZERO,
 } from './util/constants'
 import {
-  getCachedEthPriceUSD,
-} from './util/pricing'
-import {
-  infoSnapshot,
   fundSnapshot,
-  investorSnapshot
+  fundWeeklySnapshot,
+  fundMonthlySnapshot,
+  investorSnapshot,
+  investorWeeklySnapshot,
+  investorMonthlySnapshot,
+  infoSnapshot,
+  infoWeeklySnapshot,
+  infoMonthlySnapshot
 } from './util/snapshots'
 import {
   getInvestorID
@@ -90,10 +93,15 @@ export function handleCreate(event: CreateEvent): void {
   investor.save()
 
   // Create snapshots
-  const ethPriceInUSD = getCachedEthPriceUSD(event.block.timestamp)
   infoSnapshot(event)
-  fundSnapshot(event.params.fundId, event.params.manager, event, ethPriceInUSD)
+  infoWeeklySnapshot(event)
+  infoMonthlySnapshot(event)
+  fundSnapshot(event.params.fundId, event.params.manager, event)
+  fundWeeklySnapshot(event.params.fundId, event.params.manager, event)
+  fundMonthlySnapshot(event.params.fundId, event.params.manager, event)
   investorSnapshot(event.params.fundId, event.params.manager, event.params.manager, event)
+  investorWeeklySnapshot(event.params.fundId, event.params.manager, event.params.manager, event)
+  investorMonthlySnapshot(event.params.fundId, event.params.manager, event.params.manager, event)
 }
 
 export function handleInfoCreated(event: InfoCreatedEvent): void {
@@ -177,11 +185,17 @@ export function handleJoin(event: JoinEvent): void {
     info.save()
 
     // Create snapshots
-    const ethPriceInUSD = getCachedEthPriceUSD(event.block.timestamp)
     const managerAddress = SteleFundInfo.bind(Address.fromString(STELE_FUND_INFO_ADDRESS))
       .manager(fundId)
-    investorSnapshot(fundId, managerAddress, event.params.investor, event)
-    fundSnapshot(fundId, managerAddress, event, ethPriceInUSD)
+
     infoSnapshot(event)
+    infoWeeklySnapshot(event)
+    infoMonthlySnapshot(event)
+    fundSnapshot(fundId, managerAddress, event)
+    fundWeeklySnapshot(fundId, managerAddress, event)
+    fundMonthlySnapshot(fundId, managerAddress, event)
+    investorSnapshot(fundId, managerAddress, event.params.investor, event)
+    investorWeeklySnapshot(fundId, managerAddress, event.params.investor, event)
+    investorMonthlySnapshot(fundId, managerAddress, event.params.investor, event)
   }
 }

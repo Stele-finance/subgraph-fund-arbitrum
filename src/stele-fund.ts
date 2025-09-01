@@ -31,6 +31,14 @@ import {
 } from './util/pricing'
 import { fetchTokenSymbol, fetchTokenDecimals } from './util/token'
 import { getInvestorID } from './util/investor'
+import {
+  fundSnapshot,
+  investorSnapshot,
+  fundWeeklySnapshot,
+  fundMonthlySnapshot,
+  investorWeeklySnapshot,
+  investorMonthlySnapshot
+} from './util/snapshots'
 
 export function handleDeposit(event: DepositEvent): void {
   let entity = new Deposit(
@@ -276,6 +284,19 @@ export function handleDeposit(event: DepositEvent): void {
       
       fund.save()
     }
+
+    // Get manager address for snapshots
+    const managerAddressForSnapshot = SteleFundInfo.bind(Address.fromString(STELE_FUND_INFO_ADDRESS))
+      .try_manager(event.params.fundId)
+    
+    if (!managerAddressForSnapshot.reverted) {
+      fundSnapshot(event.params.fundId, managerAddressForSnapshot.value, event)
+      fundWeeklySnapshot(event.params.fundId, managerAddressForSnapshot.value, event)
+      fundMonthlySnapshot(event.params.fundId, managerAddressForSnapshot.value, event)
+      investorSnapshot(event.params.fundId, managerAddressForSnapshot.value, event.params.investor, event)
+      investorWeeklySnapshot(event.params.fundId, managerAddressForSnapshot.value, event.params.investor, event)
+      investorMonthlySnapshot(event.params.fundId, managerAddressForSnapshot.value, event.params.investor, event)
+    }
   }
 }
 
@@ -492,12 +513,19 @@ export function handleSwap(event: SwapEvent): void {
             investor.amountUSD = totalAmountUSD
             
             // Calculate profit: current USD value - principal (share in USDC raw)
-            if (investor.share && investor.share!.gt(ZERO_BI)) {
+            if (investor.share !== null && investor.share!.gt(ZERO_BI)) {
+              // Convert share (USDC raw) to decimal
               let principalUSD = BigDecimal.fromString(investor.share!.toString())
                 .div(USDC_DECIMALS) // Convert USDC raw to decimal
               
               investor.profitUSD = totalAmountUSD.minus(principalUSD)
-              investor.profitRatio = investor.profitUSD.div(principalUSD)
+              
+              // Calculate profit ratio only if principal > 0
+              if (principalUSD.gt(ZERO_BD)) {
+                investor.profitRatio = investor.profitUSD.div(principalUSD)
+              } else {
+                investor.profitRatio = ZERO_BD
+              }
             } else {
               investor.profitUSD = ZERO_BD
               investor.profitRatio = ZERO_BD
@@ -509,6 +537,16 @@ export function handleSwap(event: SwapEvent): void {
         }
       }
     }
+  }
+  
+  // Get manager address for snapshots
+  const managerAddressForSnapshot = SteleFundInfo.bind(Address.fromString(STELE_FUND_INFO_ADDRESS))
+    .try_manager(event.params.fundId)
+  
+  if (!managerAddressForSnapshot.reverted) {
+    fundSnapshot(event.params.fundId, managerAddressForSnapshot.value, event)
+    fundWeeklySnapshot(event.params.fundId, managerAddressForSnapshot.value, event)
+    fundMonthlySnapshot(event.params.fundId, managerAddressForSnapshot.value, event)
   }
 }
 
@@ -567,10 +605,13 @@ export function handleWithdraw(event: WithdrawEvent): void {
     let fundInfoContract = SteleFundInfo.bind(Address.fromString(STELE_FUND_INFO_ADDRESS))
     let tokensResult = fundInfoContract.try_getFundTokens(fundId)
     
-    if (!tokensResult.reverted && event.params.fundShare.gt(ZERO_BI)) {
+    if (!tokensResult.reverted) {
       let fundTokens = tokensResult.value
-      let investorRatio = BigDecimal.fromString(event.params.investorShare.toString())
-        .div(BigDecimal.fromString(event.params.fundShare.toString()))
+      // Calculate investor ratio only if fundShare > 0, otherwise ratio is 0 (full withdrawal)
+      let investorRatio = event.params.fundShare.gt(ZERO_BI)
+        ? BigDecimal.fromString(event.params.investorShare.toString())
+            .div(BigDecimal.fromString(event.params.fundShare.toString()))
+        : ZERO_BD
       
       // Calculate investor's current portfolio
       let tokens: Array<Bytes> = []
@@ -618,18 +659,17 @@ export function handleWithdraw(event: WithdrawEvent): void {
       investor.share = event.params.investorShare
       
       // Calculate profit: current USD value - principal (share in USDC raw)
-      if (investor.share && investor.share!.gt(ZERO_BI)) {
-        // Convert share (USDC raw) to decimal
-        let principalUSD = BigDecimal.fromString(investor.share!.toString())
-          .div(USDC_DECIMALS) // Convert USDC raw to decimal
-                  
-        // Calculate profit: current value - principal
-        investor.profitUSD = totalCurrentUSD.minus(principalUSD)
-        
-        // Calculate profit ratio
+      // Convert share (USDC raw) to decimal (share is never null here as we just set it)
+      let principalUSD = BigDecimal.fromString(event.params.investorShare.toString())
+        .div(USDC_DECIMALS) // Convert USDC raw to decimal
+                
+      // Calculate profit: current value - principal
+      investor.profitUSD = totalCurrentUSD.minus(principalUSD)
+      
+      // Calculate profit ratio only if principal > 0
+      if (principalUSD.gt(ZERO_BD)) {
         investor.profitRatio = investor.profitUSD.div(principalUSD)
       } else {
-        investor.profitUSD = ZERO_BD
         investor.profitRatio = ZERO_BD
       }
     }
@@ -752,6 +792,19 @@ export function handleWithdraw(event: WithdrawEvent): void {
       // Note: principalUSD was removed from Investor schema
       investor.save()
     }
+  }
+  
+  // Get manager address for snapshots
+  const managerAddressForSnapshot = SteleFundInfo.bind(Address.fromString(STELE_FUND_INFO_ADDRESS))
+    .try_manager(event.params.fundId)
+  
+  if (!managerAddressForSnapshot.reverted) {
+    fundSnapshot(event.params.fundId, managerAddressForSnapshot.value, event)
+    fundWeeklySnapshot(event.params.fundId, managerAddressForSnapshot.value, event)
+    fundMonthlySnapshot(event.params.fundId, managerAddressForSnapshot.value, event)
+    investorSnapshot(event.params.fundId, managerAddressForSnapshot.value, event.params.investor, event)
+    investorWeeklySnapshot(event.params.fundId, managerAddressForSnapshot.value, event.params.investor, event)
+    investorMonthlySnapshot(event.params.fundId, managerAddressForSnapshot.value, event.params.investor, event)
   }
 }
 

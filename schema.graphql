@@ -262,15 +262,31 @@ type InvestableToken @entity(immutable: false) {
 }
 
 # Snapshot entities for historical tracking
-type InfoSnapshot @entity(immutable: true) {
+type InfoSnapshot @entity(immutable: false) {
   id: ID!
-  date: Int!
+  timestamp: BigInt!
   fundCount: BigInt!
   investorCount: BigInt!
   totalAmountUSD: BigDecimal!
 }
 
-type FundSnapshot @entity(immutable: true) {
+type InfoWeeklySnapshot @entity(immutable: false) {
+  id: ID!
+  timestamp: BigInt!
+  fundCount: BigInt!
+  investorCount: BigInt!
+  totalAmountUSD: BigDecimal!
+}
+
+type InfoMonthlySnapshot @entity(immutable: false) {
+  id: ID!
+  timestamp: BigInt!
+  fundCount: BigInt!
+  investorCount: BigInt!
+  totalAmountUSD: BigDecimal!
+}
+
+type FundSnapshot @entity(immutable: false) {
   id: ID!
   timestamp: BigInt!
   fundId: String!
@@ -287,7 +303,73 @@ type FundSnapshot @entity(immutable: true) {
   tokensAmountUSD: [BigDecimal!]!
 }
 
-type InvestorSnapshot @entity(immutable: true) {
+type FundWeeklySnapshot @entity(immutable: false) {
+  id: ID!
+  timestamp: BigInt!
+  fundId: String!
+  manager: Bytes!
+  investorCount: BigInt!
+  share: BigInt!
+  amountUSD: BigDecimal!
+  profitUSD: BigDecimal!
+  profitRatio: BigDecimal!
+  tokens: [Bytes!]!
+  tokensSymbols: [String!]!
+  tokensDecimals: [BigInt!]!
+  tokensAmount: [BigDecimal!]!
+  tokensAmountUSD: [BigDecimal!]!
+}
+
+type FundMonthlySnapshot @entity(immutable: false) {
+  id: ID!
+  timestamp: BigInt!
+  fundId: String!
+  manager: Bytes!
+  investorCount: BigInt!
+  share: BigInt!
+  amountUSD: BigDecimal!
+  profitUSD: BigDecimal!
+  profitRatio: BigDecimal!
+  tokens: [Bytes!]!
+  tokensSymbols: [String!]!
+  tokensDecimals: [BigInt!]!
+  tokensAmount: [BigDecimal!]!
+  tokensAmountUSD: [BigDecimal!]!
+}
+
+type InvestorSnapshot @entity(immutable: false) {
+  id: ID!
+  timestamp: BigInt!
+  fundId: String!
+  manager: Bytes!
+  investor: Bytes!
+  share: BigInt!
+  amountUSD: BigDecimal!
+  profitUSD: BigDecimal!
+  profitRatio: BigDecimal!
+  tokens: [Bytes!]!
+  tokensSymbols: [String!]!
+  tokensDecimals: [BigInt!]!
+  tokensAmountUSD: [BigDecimal!]!
+}
+
+type InvestorWeeklySnapshot @entity(immutable: false) {
+  id: ID!
+  timestamp: BigInt!
+  fundId: String!
+  manager: Bytes!
+  investor: Bytes!
+  share: BigInt!
+  amountUSD: BigDecimal!
+  profitUSD: BigDecimal!
+  profitRatio: BigDecimal!
+  tokens: [Bytes!]!
+  tokensSymbols: [String!]!
+  tokensDecimals: [BigInt!]!
+  tokensAmountUSD: [BigDecimal!]!
+}
+
+type InvestorMonthlySnapshot @entity(immutable: false) {
   id: ID!
   timestamp: BigInt!
   fundId: String!
