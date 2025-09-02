@@ -261,6 +261,122 @@ type InvestableToken @entity(immutable: false) {
   isInvestable: Boolean!
 }
 
+# Governance entities - simplified like challenge governance
+enum ProposalStatus {
+  Pending
+  Active
+  Canceled
+  Defeated
+  Succeeded
+  Queued
+  Expired
+  Executed
+}
+
+type Proposal @entity(immutable: false) {
+  id: Bytes!
+  proposalId: BigInt!
+  proposer: Bytes!
+  targets: [Bytes!]!
+  values: [BigInt!]!
+  signatures: [String!]!
+  calldatas: [Bytes!]!
+  voteStart: BigInt!
+  voteEnd: BigInt!
+  description: String!
+  status: ProposalStatus!
+  forVotes: BigInt!
+  againstVotes: BigInt!
+  abstainVotes: BigInt!
+  totalVotes: BigInt!
+  executed: Boolean!
+  canceled: Boolean!
+  queued: Boolean!
+  eta: BigInt
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Vote @entity(immutable: true) {
+  id: Bytes!
+  proposalId: BigInt!
+  voter: Bytes!
+  support: Int! # 0=Against, 1=For, 2=Abstain
+  weight: BigInt!
+  reason: String
+  params: Bytes
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+# Keep VotingPower as requested
+type VotingPower @entity(immutable: false) {
+  id: String! # voter-blockNumber
+  voter: Bytes!
+  blockNumber: BigInt!
+  votingPower: BigInt!
+  timestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ProposalExecuted @entity(immutable: true) {
+  id: Bytes!
+  proposalId: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ProposalQueued @entity(immutable: true) {
+  id: Bytes!
+  proposalId: BigInt!
+  eta: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ProposalCanceled @entity(immutable: true) {
+  id: Bytes!
+  proposalId: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+# Token entities for voting power tracking
+type DelegateChanged @entity(immutable: true) {
+  id: Bytes! # tx hash + log index
+  delegator: Bytes!
+  fromDelegate: Bytes!
+  toDelegate: Bytes!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type DelegateVotesChanged @entity(immutable: true) {
+  id: Bytes! # tx hash + log index
+  delegate: Bytes!
+  previousBalance: BigInt!
+  newBalance: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type TokenTransfer @entity(immutable: true) {
+  id: Bytes! # tx hash + log index
+  from: Bytes!
+  to: Bytes!
+  value: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
 # Snapshot entities for historical tracking
 type InfoSnapshot @entity(immutable: false) {
   id: ID!

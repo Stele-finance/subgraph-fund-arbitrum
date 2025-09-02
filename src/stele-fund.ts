@@ -37,7 +37,10 @@ import {
   fundWeeklySnapshot,
   fundMonthlySnapshot,
   investorWeeklySnapshot,
-  investorMonthlySnapshot
+  investorMonthlySnapshot,
+  infoSnapshot,
+  infoWeeklySnapshot,
+  infoMonthlySnapshot
 } from './util/snapshots'
 
 export function handleDeposit(event: DepositEvent): void {
@@ -290,6 +293,9 @@ export function handleDeposit(event: DepositEvent): void {
       .try_manager(event.params.fundId)
     
     if (!managerAddressForSnapshot.reverted) {
+      infoSnapshot(event)
+      infoWeeklySnapshot(event)
+      infoMonthlySnapshot(event)
       fundSnapshot(event.params.fundId, managerAddressForSnapshot.value, event)
       fundWeeklySnapshot(event.params.fundId, managerAddressForSnapshot.value, event)
       fundMonthlySnapshot(event.params.fundId, managerAddressForSnapshot.value, event)
@@ -799,6 +805,9 @@ export function handleWithdraw(event: WithdrawEvent): void {
     .try_manager(event.params.fundId)
   
   if (!managerAddressForSnapshot.reverted) {
+    infoSnapshot(event)
+    infoWeeklySnapshot(event)
+    infoMonthlySnapshot(event)
     fundSnapshot(event.params.fundId, managerAddressForSnapshot.value, event)
     fundWeeklySnapshot(event.params.fundId, managerAddressForSnapshot.value, event)
     fundMonthlySnapshot(event.params.fundId, managerAddressForSnapshot.value, event)
