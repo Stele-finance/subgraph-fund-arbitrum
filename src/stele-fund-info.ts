@@ -83,10 +83,6 @@ export function handleCreate(event: CreateEvent): void {
     investor.investor = event.params.manager
     investor.isManager = true
     investor.amountUSD = ZERO_BD
-    investor.tokens = []
-    investor.tokensSymbols = []
-    investor.tokensDecimals = []
-    investor.tokensAmount = []
     investor.profitUSD = ZERO_BD
     investor.profitRatio = ZERO_BD
   }
@@ -172,10 +168,6 @@ export function handleJoin(event: JoinEvent): void {
       investor.investor = event.params.investor
       investor.isManager = false
       investor.amountUSD = ZERO_BD
-      investor.tokens = []
-      investor.tokensSymbols = []
-      investor.tokensDecimals = []
-      investor.tokensAmount = []
       investor.profitUSD = ZERO_BD
       investor.profitRatio = ZERO_BD  
     }

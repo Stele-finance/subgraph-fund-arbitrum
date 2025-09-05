@@ -238,10 +238,6 @@ type Investor @entity(immutable: false) {
   amountUSD: BigDecimal!
   profitUSD: BigDecimal!
   profitRatio: BigDecimal!
-  tokens: [Bytes!]!
-  tokensSymbols: [String!]!
-  tokensDecimals: [BigInt!]!
-  tokensAmount: [BigDecimal!]!
 }
 
 type Setting @entity(immutable: false) {
@@ -463,10 +459,6 @@ type InvestorSnapshot @entity(immutable: false) {
   amountUSD: BigDecimal!
   profitUSD: BigDecimal!
   profitRatio: BigDecimal!
-  tokens: [Bytes!]!
-  tokensSymbols: [String!]!
-  tokensDecimals: [BigInt!]!
-  tokensAmountUSD: [BigDecimal!]!
 }
 
 type InvestorWeeklySnapshot @entity(immutable: false) {
@@ -479,10 +471,6 @@ type InvestorWeeklySnapshot @entity(immutable: false) {
   amountUSD: BigDecimal!
   profitUSD: BigDecimal!
   profitRatio: BigDecimal!
-  tokens: [Bytes!]!
-  tokensSymbols: [String!]!
-  tokensDecimals: [BigInt!]!
-  tokensAmountUSD: [BigDecimal!]!
 }
 
 type InvestorMonthlySnapshot @entity(immutable: false) {
@@ -495,8 +483,4 @@ type InvestorMonthlySnapshot @entity(immutable: false) {
   amountUSD: BigDecimal!
   profitUSD: BigDecimal!
   profitRatio: BigDecimal!
-  tokens: [Bytes!]!
-  tokensSymbols: [String!]!
-  tokensDecimals: [BigInt!]!
-  tokensAmountUSD: [BigDecimal!]!
 }

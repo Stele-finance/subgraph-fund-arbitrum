@@ -105,21 +105,7 @@ export function investorSnapshot(
   }
   snapshot.amountUSD = investorEntity.amountUSD
   snapshot.profitUSD = investorEntity.profitUSD
-  snapshot.profitRatio = investorEntity.profitRatio
-  
-  // Set token arrays
-  snapshot.tokens = investorEntity.tokens
-  snapshot.tokensSymbols = investorEntity.tokensSymbols
-  snapshot.tokensDecimals = investorEntity.tokensDecimals
-  
-  // Calculate USD amounts for each token
-  let tokensAmountUSD: BigDecimal[] = []
-  
-  for (let i = 0; i < investorEntity.tokens.length; i++) {
-    // This is simplified - in production you'd calculate actual token values
-    tokensAmountUSD.push(ZERO_BD)
-  }
-  snapshot.tokensAmountUSD = tokensAmountUSD
+  snapshot.profitRatio = investorEntity.profitRatio  
   snapshot.save()
 }
 
@@ -212,16 +198,6 @@ export function investorWeeklySnapshot(
   snapshot.amountUSD = investorEntity.amountUSD
   snapshot.profitUSD = investorEntity.profitUSD
   snapshot.profitRatio = investorEntity.profitRatio
-  
-  snapshot.tokens = investorEntity.tokens
-  snapshot.tokensSymbols = investorEntity.tokensSymbols
-  snapshot.tokensDecimals = investorEntity.tokensDecimals
-  
-  let tokensAmountUSD: BigDecimal[] = []
-  for (let i = 0; i < investorEntity.tokens.length; i++) {
-    tokensAmountUSD.push(ZERO_BD)
-  }
-  snapshot.tokensAmountUSD = tokensAmountUSD
   snapshot.save()
 }
 
@@ -314,15 +290,5 @@ export function investorMonthlySnapshot(
   snapshot.amountUSD = investorEntity.amountUSD
   snapshot.profitUSD = investorEntity.profitUSD
   snapshot.profitRatio = investorEntity.profitRatio
-  
-  snapshot.tokens = investorEntity.tokens
-  snapshot.tokensSymbols = investorEntity.tokensSymbols
-  snapshot.tokensDecimals = investorEntity.tokensDecimals
-  
-  let tokensAmountUSD: BigDecimal[] = []
-  for (let i = 0; i < investorEntity.tokens.length; i++) {
-    tokensAmountUSD.push(ZERO_BD)
-  }
-  snapshot.tokensAmountUSD = tokensAmountUSD
   snapshot.save()
 }

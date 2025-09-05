@@ -169,10 +169,6 @@ export function handleDeposit(event: DepositEvent): void {
           }
         }
         
-        investor.tokens = tokens
-        investor.tokensSymbols = tokensSymbols
-        investor.tokensDecimals = tokensDecimals
-        investor.tokensAmount = tokensAmount
         investor.amountUSD = totalAmountUSD
         
         // Calculate profit: current USD value - principal (share in USDC raw)
@@ -512,10 +508,6 @@ export function handleSwap(event: SwapEvent): void {
               }
             }
             
-            investor.tokens = tokens
-            investor.tokensSymbols = tokensSymbols
-            investor.tokensDecimals = tokensDecimals
-            investor.tokensAmount = tokensAmount
             investor.amountUSD = totalAmountUSD
             
             // Calculate profit: current USD value - principal (share in USDC raw)
@@ -655,10 +647,6 @@ export function handleWithdraw(event: WithdrawEvent): void {
       }
       
       // Update investor's current portfolio
-      investor.tokens = tokens
-      investor.tokensSymbols = tokensSymbols
-      investor.tokensDecimals = tokensDecimals
-      investor.tokensAmount = tokensAmount
       investor.amountUSD = totalCurrentUSD
       
       // Update investor share
