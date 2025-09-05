@@ -257,78 +257,19 @@ type InvestableToken @entity(immutable: false) {
   isInvestable: Boolean!
 }
 
-# Governance entities - simplified like challenge governance
-enum ProposalStatus {
-  Pending
-  Active
-  Canceled
-  Defeated
-  Succeeded
-  Queued
-  Expired
-  Executed
-}
+# Governance Entities
 
-type Proposal @entity(immutable: false) {
+type ProposalCreated @entity(immutable: true) {
   id: Bytes!
-  proposalId: BigInt!
-  proposer: Bytes!
-  targets: [Bytes!]!
-  values: [BigInt!]!
-  signatures: [String!]!
-  calldatas: [Bytes!]!
-  voteStart: BigInt!
-  voteEnd: BigInt!
-  description: String!
-  status: ProposalStatus!
-  forVotes: BigInt!
-  againstVotes: BigInt!
-  abstainVotes: BigInt!
-  totalVotes: BigInt!
-  executed: Boolean!
-  canceled: Boolean!
-  queued: Boolean!
-  eta: BigInt
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type Vote @entity(immutable: true) {
-  id: Bytes!
-  proposalId: BigInt!
-  voter: Bytes!
-  support: Int! # 0=Against, 1=For, 2=Abstain
-  weight: BigInt!
-  reason: String
-  params: Bytes
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-# Keep VotingPower as requested
-type VotingPower @entity(immutable: false) {
-  id: String! # voter-blockNumber
-  voter: Bytes!
-  blockNumber: BigInt!
-  votingPower: BigInt!
-  timestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type ProposalExecuted @entity(immutable: true) {
-  id: Bytes!
-  proposalId: BigInt!
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type ProposalQueued @entity(immutable: true) {
-  id: Bytes!
-  proposalId: BigInt!
-  eta: BigInt!
+  proposalId: BigInt! # uint256
+  proposer: Bytes! # address
+  targets: [Bytes!]! # address[]
+  values: [BigInt!]! # uint256[]
+  signatures: [String!]! # string[]
+  calldatas: [Bytes!]! # bytes[]
+  voteStart: BigInt! # uint256
+  voteEnd: BigInt! # uint256
+  description: String! # string
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -336,7 +277,161 @@ type ProposalQueued @entity(immutable: true) {
 
 type ProposalCanceled @entity(immutable: true) {
   id: Bytes!
-  proposalId: BigInt!
+  proposalId: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ProposalExecuted @entity(immutable: true) {
+  id: Bytes!
+  proposalId: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ProposalQueued @entity(immutable: true) {
+  id: Bytes!
+  proposalId: BigInt! # uint256
+  eta: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type VoteCast @entity(immutable: true) {
+  id: Bytes!
+  voter: Bytes! # address
+  proposalId: BigInt! # uint256
+  support: Int! # uint8
+  weight: BigInt! # uint256
+  reason: String! # string
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type VoteCastWithParams @entity(immutable: true) {
+  id: Bytes!
+  voter: Bytes! # address
+  proposalId: BigInt! # uint256
+  support: Int! # uint8
+  weight: BigInt! # uint256
+  reason: String! # string
+  params: Bytes! # bytes
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ProposalThresholdSet @entity(immutable: true) {
+  id: Bytes!
+  oldProposalThreshold: BigInt! # uint256
+  newProposalThreshold: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type QuorumNumeratorUpdated @entity(immutable: true) {
+  id: Bytes!
+  oldQuorumNumerator: BigInt! # uint256
+  newQuorumNumerator: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type VotingDelaySet @entity(immutable: true) {
+  id: Bytes!
+  oldVotingDelay: BigInt! # uint256
+  newVotingDelay: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type VotingPeriodSet @entity(immutable: true) {
+  id: Bytes!
+  oldVotingPeriod: BigInt! # uint256
+  newVotingPeriod: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type TimelockChange @entity(immutable: true) {
+  id: Bytes!
+  oldTimelock: Bytes! # address
+  newTimelock: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+# Proposal Vote Results Aggregation
+type ProposalVoteResult @entity(immutable: false) {
+  id: ID! # proposalId
+  proposalId: BigInt! # uint256
+  forVotes: BigInt! # total votes for
+  againstVotes: BigInt! # total votes against
+  abstainVotes: BigInt! # total abstain votes
+  totalVotes: BigInt! # total votes cast
+  forPercentage: BigDecimal! # percentage for (0-100)
+  againstPercentage: BigDecimal! # percentage against (0-100)
+  abstainPercentage: BigDecimal! # percentage abstain (0-100)
+  voterCount: BigInt! # number of unique voters
+  lastUpdatedBlock: BigInt! # last block when updated
+  lastUpdatedTimestamp: BigInt! # last timestamp when updated
+  isFinalized: Boolean! # whether voting period has ended
+}
+
+enum ProposalStatus {
+  PENDING         # Created but voting hasn't started
+  ACTIVE          # Voting is currently active
+  QUEUED          # Proposal is queued for execution (timelock period)
+  EXECUTED        # Proposal has been executed
+  CANCELED        # Proposal has been canceled
+}
+
+# Comprehensive Proposal State Tracking
+type Proposal @entity(immutable: false) {
+  id: ID! # proposalId
+  proposalId: BigInt! # uint256
+  proposer: Bytes! # address
+  targets: [Bytes!]! # address[]
+  values: [BigInt!]! # uint256[]
+  signatures: [String!]! # string[]
+  calldatas: [Bytes!]! # bytes[]
+  voteStart: BigInt! # uint256
+  voteEnd: BigInt! # uint256
+  description: String! # string
+  
+  # Status tracking
+  status: ProposalStatus! # current status
+  createdAt: BigInt! # creation timestamp
+  queuedAt: BigInt # queued timestamp (null if not queued)
+  executedAt: BigInt # executed timestamp (null if not executed)
+  canceledAt: BigInt # canceled timestamp (null if not canceled)
+  eta: BigInt # execution eta (null if not queued)
+  
+  # Vote aggregation (linked to ProposalVoteResult)
+  voteResult: ProposalVoteResult
+  
+  # Block info
+  createdAtBlock: BigInt!
+  lastUpdatedBlock: BigInt!
+}
+
+# Individual Vote Record with aggregation helper
+type Vote @entity(immutable: true) {
+  id: ID! # proposalId-voter
+  proposalId: BigInt! # uint256
+  voter: Bytes! # address
+  support: Int! # uint8 (0=against, 1=for, 2=abstain)
+  weight: BigInt! # uint256
+  reason: String! # string
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

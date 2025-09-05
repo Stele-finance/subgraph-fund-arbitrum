@@ -5,7 +5,6 @@ import {
   DelegateVotesChanged as DelegateVotesChangedEvent
 } from "../generated/Token/Token"
 import {
-  VotingPower,
   DelegateChanged,
   DelegateVotesChanged,
   TokenTransfer
@@ -60,16 +59,6 @@ export function handleDelegateVotesChanged(event: DelegateVotesChangedEvent): vo
   votesChange.blockTimestamp = event.block.timestamp
   votesChange.transactionHash = event.transaction.hash
   votesChange.save()
-
-  // Create/update VotingPower entry
-  let votingPowerId = event.params.delegate.toHexString() + "-" + event.block.number.toString()
-  let votingPower = new VotingPower(votingPowerId)
-  votingPower.voter = event.params.delegate
-  votingPower.blockNumber = event.block.number
-  votingPower.votingPower = event.params.newBalance
-  votingPower.timestamp = event.block.timestamp
-  votingPower.transactionHash = event.transaction.hash
-  votingPower.save()
 
   log.info('[TOKEN] Delegate votes changed: {} from {} to {}', [
     event.params.delegate.toHexString(),
