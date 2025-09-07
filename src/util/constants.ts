@@ -12,8 +12,8 @@ export const USDC = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831'
 export const UNISWAP_V3_FACTORY = '0x1F98431c8aD98523631AE4a59f267346ea31F984'
 
 // Stele Fund Addresses
-export const STELE_FUND_SETTING_ADDRESS = '0x71295d1a25e904dd184659c506a3d867476567f6'
-export const STELE_FUND_INFO_ADDRESS = '0xee8722e695ce68e69041a3d2ad75abf65b0afc8f'
+export const STELE_FUND_SETTING_ADDRESS = '0xBCB430393B763E4fB53F7A4AA0A06a6c94076a3A'
+export const STELE_FUND_INFO_ADDRESS = '0xAB0536ABeC215dc959586D2e74ade0728A53eb9b'
 export const STELE_FUND_TOKEN_ADDRESS = '0x08C9c9EE6F161c6056060BF6AC7fE85e38638619'
 
 // Cache durations (in seconds)
@@ -26,6 +26,7 @@ export const TOKEN_INFO_CACHE_DURATION = 604800 // 1 week
 export const UNKNOWN = 'Unknown'
 export const DECIMAL_18 = '1000000000000000000'
 export const DECIMAL_6 = '1000000'
+export const USDC_DECIMALS = BigDecimal.fromString(DECIMAL_6) // 10^6 for USDC decimals
 
 // Transaction types
 export const TYPE_DEPOSIT = 'DEPOSIT'

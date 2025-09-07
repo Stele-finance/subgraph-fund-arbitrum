@@ -7,12 +7,10 @@ import {
     ZERO_BI,
     ONE_BD,
     PRICE_CACHE_DURATION,
-    POOL_INFO_CACHE_DURATION,
     POOL_LIQUIDITY_CACHE_DURATION,
     POOL_SLOT0_CACHE_DURATION,
 } from './constants'
 import { safeDiv } from './index'
-import { ERC20 } from '../../generated/SteleFund/ERC20'
 import { UniswapV3Factory } from '../../generated/SteleFund/UniswapV3Factory'
 import { UniswapV3Pool } from '../../generated/SteleFund/UniswapV3Pool'
 import { fetchTokenDecimals } from './token'

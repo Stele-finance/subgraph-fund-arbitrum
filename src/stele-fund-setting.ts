@@ -1,14 +1,19 @@
-import { Bytes, BigInt } from "@graphprotocol/graph-ts"
+import { Bytes, BigInt, Address } from "@graphprotocol/graph-ts"
 import {
   SettingCreated as SettingCreatedEvent,
   ManagerFeeChanged as ManagerFeeChangedEvent,
+  MaxSlippageChanged as MaxSlippageChangedEvent,
+  MaxTokensChanged as MaxTokensChangedEvent,
   OwnerChanged as OwnerChangedEvent,
   AddToken as AddTokenEvent,
   RemoveToken as RemoveTokenEvent,
+  SteleFundSetting
 } from "../generated/SteleFundSetting/SteleFundSetting"
 import {
   SettingCreated,
   ManagerFeeChanged,
+  MaxSlippageChanged,
+  MaxTokensChanged,
   OwnerChanged,
   Setting,
   InvestableToken
@@ -16,7 +21,6 @@ import {
 import { 
   STELE_FUND_SETTING_ADDRESS,
   ADDRESS_ZERO,
-  DECIMAL_18,
   WETH,
   USDC,
 } from './util/constants'
@@ -34,9 +38,13 @@ export function handleSettingCreated(event: SettingCreatedEvent): void {
   let setting = Setting.load(Bytes.fromHexString(STELE_FUND_SETTING_ADDRESS))
   if (setting === null) {
     setting = new Setting(Bytes.fromHexString(STELE_FUND_SETTING_ADDRESS))
-    setting.managerFee = BigInt.fromString("10000")
-    setting.minPoolAmount = BigInt.fromString(DECIMAL_18)
-    setting.owner = Bytes.fromHexString(ADDRESS_ZERO)
+    
+    // Fetch values from contract
+    let contract = SteleFundSetting.bind(Address.fromString(STELE_FUND_SETTING_ADDRESS))
+    setting.managerFee = contract.managerFee()
+    setting.maxSlippage = contract.maxSlippage()
+    setting.maxTokens = contract.maxTokens()
+    setting.owner = contract.owner()
     setting.save()
   }
   
@@ -120,4 +128,36 @@ export function handleRemoveToken(event: RemoveTokenEvent): void {
     investableToken.isInvestable = false
     investableToken.save()
   }
+}
+
+export function handleMaxSlippageChanged(event: MaxSlippageChangedEvent): void {
+  let entity = new MaxSlippageChanged(
+    event.transaction.hash.concatI32(event.logIndex.toI32()),
+  )
+  entity.maxSlippage = event.params.maxSlippage
+  entity.blockNumber = event.block.number
+  entity.blockTimestamp = event.block.timestamp
+  entity.transactionHash = event.transaction.hash
+  entity.save()
+
+  let setting = Setting.load(Bytes.fromHexString(STELE_FUND_SETTING_ADDRESS))
+  if (!setting) return
+  setting.maxSlippage = event.params.maxSlippage
+  setting.save()
+}
+
+export function handleMaxTokensChanged(event: MaxTokensChangedEvent): void {
+  let entity = new MaxTokensChanged(
+    event.transaction.hash.concatI32(event.logIndex.toI32()),
+  )
+  entity.maxTokens = event.params.maxTokens
+  entity.blockNumber = event.block.number
+  entity.blockTimestamp = event.block.timestamp
+  entity.transactionHash = event.transaction.hash
+  entity.save()
+
+  let setting = Setting.load(Bytes.fromHexString(STELE_FUND_SETTING_ADDRESS))
+  if (!setting) return
+  setting.maxTokens = event.params.maxTokens
+  setting.save()
 }
