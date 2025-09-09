@@ -2,7 +2,6 @@ import { newMockEvent } from "matchstick-as"
 import { ethereum, BigInt, Address } from "@graphprotocol/graph-ts"
 import {
   Deposit,
-  DepositFee,
   Swap,
   Withdraw,
   WithdrawFee
@@ -32,32 +31,6 @@ export function createDepositEvent(
   )
 
   return depositEvent
-}
-
-export function createDepositFeeEvent(
-  fundId: BigInt,
-  investor: Address,
-  token: Address,
-  amount: BigInt
-): DepositFee {
-  let depositFeeEvent = changetype<DepositFee>(newMockEvent())
-
-  depositFeeEvent.parameters = new Array()
-
-  depositFeeEvent.parameters.push(
-    new ethereum.EventParam("fundId", ethereum.Value.fromUnsignedBigInt(fundId))
-  )
-  depositFeeEvent.parameters.push(
-    new ethereum.EventParam("investor", ethereum.Value.fromAddress(investor))
-  )
-  depositFeeEvent.parameters.push(
-    new ethereum.EventParam("token", ethereum.Value.fromAddress(token))
-  )
-  depositFeeEvent.parameters.push(
-    new ethereum.EventParam("amount", ethereum.Value.fromUnsignedBigInt(amount))
-  )
-
-  return depositFeeEvent
 }
 
 export function createSwapEvent(

@@ -5,12 +5,6 @@ import {
   ProposalExecuted as ProposalExecutedEvent,
   ProposalQueued as ProposalQueuedEvent,
   VoteCast as VoteCastEvent,
-  VoteCastWithParams as VoteCastWithParamsEvent,
-  ProposalThresholdSet as ProposalThresholdSetEvent,
-  QuorumNumeratorUpdated as QuorumNumeratorUpdatedEvent,
-  VotingDelaySet as VotingDelaySetEvent,
-  VotingPeriodSet as VotingPeriodSetEvent,
-  TimelockChange as TimelockChangeEvent
 } from "../generated/SteleFundGovernor/SteleFundGovernor"
 import {
   ProposalCreated,
@@ -18,12 +12,6 @@ import {
   ProposalExecuted,
   ProposalQueued,
   VoteCast,
-  VoteCastWithParams,
-  ProposalThresholdSet,
-  QuorumNumeratorUpdated,
-  VotingDelaySet,
-  VotingPeriodSet,
-  TimelockChange,
   Proposal,
   ProposalVoteResult,
   Vote
@@ -175,10 +163,10 @@ export function handleVoteCast(event: VoteCastEvent): void {
     
     // Calculate percentages
     if (voteResult.totalVotes.gt(ZERO_BI)) {
-      let totalVotesBD = new BigDecimal(voteResult.totalVotes)
-      voteResult.forPercentage = new BigDecimal(voteResult.forVotes).times(HUNDRED_BD).div(totalVotesBD)
-      voteResult.againstPercentage = new BigDecimal(voteResult.againstVotes).times(HUNDRED_BD).div(totalVotesBD)
-      voteResult.abstainPercentage = new BigDecimal(voteResult.abstainVotes).times(HUNDRED_BD).div(totalVotesBD)
+      let totalVotesBD = BigDecimal.fromString(voteResult.totalVotes.toString())
+      voteResult.forPercentage = BigDecimal.fromString(voteResult.forVotes.toString()).times(HUNDRED_BD).div(totalVotesBD)
+      voteResult.againstPercentage = BigDecimal.fromString(voteResult.againstVotes.toString()).times(HUNDRED_BD).div(totalVotesBD)
+      voteResult.abstainPercentage = BigDecimal.fromString(voteResult.abstainVotes.toString()).times(HUNDRED_BD).div(totalVotesBD)
     }
     
     voteResult.lastUpdatedBlock = event.block.number
@@ -201,113 +189,27 @@ export function handleVoteCast(event: VoteCastEvent): void {
   ])
 }
 
-export function handleVoteCastWithParams(event: VoteCastWithParamsEvent): void {
-  // Create immutable VoteCastWithParams entity
-  let voteCastWithParamsId = event.transaction.hash.concatI32(event.logIndex.toI32())
-  let voteCastWithParams = new VoteCastWithParams(voteCastWithParamsId)
-  voteCastWithParams.voter = event.params.voter
-  voteCastWithParams.proposalId = event.params.proposalId
-  voteCastWithParams.support = event.params.support
-  voteCastWithParams.weight = event.params.weight
-  voteCastWithParams.reason = event.params.reason
-  voteCastWithParams.params = event.params.params
-  voteCastWithParams.blockNumber = event.block.number
-  voteCastWithParams.blockTimestamp = event.block.timestamp
-  voteCastWithParams.transactionHash = event.transaction.hash
-  voteCastWithParams.save()
-  
-  // Create Vote entity
-  let voteId = event.params.proposalId.toString() + "-" + event.params.voter.toHexString()
-  let vote = Vote.load(voteId)
-  if (vote == null) {
-    vote = new Vote(voteId)
-    vote.proposalId = event.params.proposalId
-    vote.voter = event.params.voter
-    vote.support = event.params.support
-    vote.weight = event.params.weight
-    vote.reason = event.params.reason
-    vote.blockNumber = event.block.number
-    vote.blockTimestamp = event.block.timestamp
-    vote.transactionHash = event.transaction.hash
-    vote.save()
-    
-    // Update voter count
-    let proposalId = event.params.proposalId.toString()
-    let voteResult = ProposalVoteResult.load(proposalId)
-    if (voteResult) {
-      voteResult.voterCount = voteResult.voterCount.plus(BigInt.fromI32(1))
-      voteResult.save()
-    }
-  }
-  
-  // Update ProposalVoteResult (same logic as handleVoteCast)
-  let proposalId = event.params.proposalId.toString()
-  let voteResult = ProposalVoteResult.load(proposalId)
-  if (voteResult) {
-    if (event.params.support == 0) { // Against
-      voteResult.againstVotes = voteResult.againstVotes.plus(event.params.weight)
-    } else if (event.params.support == 1) { // For
-      voteResult.forVotes = voteResult.forVotes.plus(event.params.weight)
-    } else if (event.params.support == 2) { // Abstain
-      voteResult.abstainVotes = voteResult.abstainVotes.plus(event.params.weight)
-    }
-    
-    voteResult.totalVotes = voteResult.totalVotes.plus(event.params.weight)
-    
-    // Calculate percentages
-    if (voteResult.totalVotes.gt(ZERO_BI)) {
-      let totalVotesBD = new BigDecimal(voteResult.totalVotes)
-      voteResult.forPercentage = new BigDecimal(voteResult.forVotes).times(HUNDRED_BD).div(totalVotesBD)
-      voteResult.againstPercentage = new BigDecimal(voteResult.againstVotes).times(HUNDRED_BD).div(totalVotesBD)
-      voteResult.abstainPercentage = new BigDecimal(voteResult.abstainVotes).times(HUNDRED_BD).div(totalVotesBD)
-    }
-    
-    voteResult.lastUpdatedBlock = event.block.number
-    voteResult.lastUpdatedTimestamp = event.block.timestamp
-    voteResult.save()
-  }
-  
-  // Update Proposal status if voting has started
-  let proposal = Proposal.load(proposalId)
-  if (proposal && event.block.timestamp >= proposal.voteStart && proposal.status == "PENDING") {
-    proposal.status = "ACTIVE"
-    proposal.lastUpdatedBlock = event.block.number
-    proposal.save()
-  }
-  
-  log.info("Vote cast with params: Proposal {} by {} with weight {}", [
-    event.params.proposalId.toString(),
-    event.params.voter.toHexString(),
-    event.params.weight.toString()
-  ])
-}
-
 export function handleProposalQueued(event: ProposalQueuedEvent): void {
-  // Create immutable ProposalQueued entity
-  let proposalQueuedId = event.transaction.hash.concatI32(event.logIndex.toI32())
-  let proposalQueued = new ProposalQueued(proposalQueuedId)
-  proposalQueued.proposalId = event.params.proposalId
-  proposalQueued.eta = event.params.etaSeconds
-  proposalQueued.blockNumber = event.block.number
-  proposalQueued.blockTimestamp = event.block.timestamp
-  proposalQueued.transactionHash = event.transaction.hash
-  proposalQueued.save()
-  
-  // Update Proposal entity
-  let proposalId = event.params.proposalId.toString()
-  let proposal = Proposal.load(proposalId)
+  // Save ProposalQueued event entity
+  let entity = new ProposalQueued(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  )
+  entity.proposalId = event.params.proposalId
+  entity.eta = event.params.eta
+  entity.blockNumber = event.block.number
+  entity.blockTimestamp = event.block.timestamp
+  entity.transactionHash = event.transaction.hash
+  entity.save()
+
+  // Update Proposal status to QUEUED
+  let proposal = Proposal.load(event.params.proposalId.toString())
   if (proposal) {
     proposal.status = "QUEUED"
     proposal.queuedAt = event.block.timestamp
-    proposal.eta = event.params.etaSeconds
+    proposal.eta = event.params.eta
     proposal.lastUpdatedBlock = event.block.number
     proposal.save()
   }
-  
-  log.info("Proposal queued: {} with eta {}", [
-    event.params.proposalId.toString(),
-    event.params.etaSeconds.toString()
-  ])
 }
 
 export function handleProposalExecuted(event: ProposalExecutedEvent): void {
@@ -372,84 +274,4 @@ export function handleProposalCanceled(event: ProposalCanceledEvent): void {
   }
   
   log.info("Proposal canceled: {}", [event.params.proposalId.toString()])
-}
-
-export function handleProposalThresholdSet(event: ProposalThresholdSetEvent): void {
-  let id = event.transaction.hash.concatI32(event.logIndex.toI32())
-  let thresholdSet = new ProposalThresholdSet(id)
-  thresholdSet.oldProposalThreshold = event.params.oldProposalThreshold
-  thresholdSet.newProposalThreshold = event.params.newProposalThreshold
-  thresholdSet.blockNumber = event.block.number
-  thresholdSet.blockTimestamp = event.block.timestamp
-  thresholdSet.transactionHash = event.transaction.hash
-  thresholdSet.save()
-  
-  log.info("Proposal threshold set: {} -> {}", [
-    event.params.oldProposalThreshold.toString(),
-    event.params.newProposalThreshold.toString()
-  ])
-}
-
-export function handleQuorumNumeratorUpdated(event: QuorumNumeratorUpdatedEvent): void {
-  let id = event.transaction.hash.concatI32(event.logIndex.toI32())
-  let quorumUpdated = new QuorumNumeratorUpdated(id)
-  quorumUpdated.oldQuorumNumerator = event.params.oldQuorumNumerator
-  quorumUpdated.newQuorumNumerator = event.params.newQuorumNumerator
-  quorumUpdated.blockNumber = event.block.number
-  quorumUpdated.blockTimestamp = event.block.timestamp
-  quorumUpdated.transactionHash = event.transaction.hash
-  quorumUpdated.save()
-  
-  log.info("Quorum numerator updated: {} -> {}", [
-    event.params.oldQuorumNumerator.toString(),
-    event.params.newQuorumNumerator.toString()
-  ])
-}
-
-export function handleVotingDelaySet(event: VotingDelaySetEvent): void {
-  let id = event.transaction.hash.concatI32(event.logIndex.toI32())
-  let votingDelaySet = new VotingDelaySet(id)
-  votingDelaySet.oldVotingDelay = event.params.oldVotingDelay
-  votingDelaySet.newVotingDelay = event.params.newVotingDelay
-  votingDelaySet.blockNumber = event.block.number
-  votingDelaySet.blockTimestamp = event.block.timestamp
-  votingDelaySet.transactionHash = event.transaction.hash
-  votingDelaySet.save()
-  
-  log.info("Voting delay set: {} -> {}", [
-    event.params.oldVotingDelay.toString(),
-    event.params.newVotingDelay.toString()
-  ])
-}
-
-export function handleVotingPeriodSet(event: VotingPeriodSetEvent): void {
-  let id = event.transaction.hash.concatI32(event.logIndex.toI32())
-  let votingPeriodSet = new VotingPeriodSet(id)
-  votingPeriodSet.oldVotingPeriod = event.params.oldVotingPeriod
-  votingPeriodSet.newVotingPeriod = event.params.newVotingPeriod
-  votingPeriodSet.blockNumber = event.block.number
-  votingPeriodSet.blockTimestamp = event.block.timestamp
-  votingPeriodSet.transactionHash = event.transaction.hash
-  votingPeriodSet.save()
-  
-  log.info("Voting period set: {} -> {}", [
-    event.params.oldVotingPeriod.toString(),
-    event.params.newVotingPeriod.toString()
-  ])
-}
-
-export function handleTimelockChange(event: TimelockChangeEvent): void {
-  let id = event.transaction.hash.concatI32(event.logIndex.toI32())
-  let timelockChange = new TimelockChange(id)
-  timelockChange.oldTimelock = event.params.oldTimelock
-  timelockChange.newTimelock = event.params.newTimelock
-  timelockChange.blockNumber = event.block.number
-  timelockChange.blockTimestamp = event.block.timestamp
-  timelockChange.transactionHash = event.transaction.hash
-  timelockChange.save()
-  
-  log.info("Timelock changed: {} -> {}", [
-    event.params.oldTimelock.toHexString(),
-    event.params.newTimelock.toHexString()
-  ])
 }

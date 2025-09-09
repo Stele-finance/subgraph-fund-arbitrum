@@ -5,18 +5,10 @@ type Deposit @entity(immutable: true) {
   token: Bytes! # address
   symbol: String!
   amount: BigDecimal! # formatted amount (not raw)
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type DepositFee @entity(immutable: true) {
-  id: Bytes!
-  fundId: BigInt! # uint256
-  manager: Bytes! # address
-  token: Bytes! # address
-  symbol: String!
-  amount: BigDecimal! # formatted amount (not raw)
+  investorShare: BigInt! # uint256
+  fundShare: BigInt! # uint256
+  fundAmount: BigDecimal! # formatted fund amount (not raw)
+  feeAmount: BigDecimal! # formatted fee amount (not raw)
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -312,64 +304,6 @@ type VoteCast @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
-type VoteCastWithParams @entity(immutable: true) {
-  id: Bytes!
-  voter: Bytes! # address
-  proposalId: BigInt! # uint256
-  support: Int! # uint8
-  weight: BigInt! # uint256
-  reason: String! # string
-  params: Bytes! # bytes
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type ProposalThresholdSet @entity(immutable: true) {
-  id: Bytes!
-  oldProposalThreshold: BigInt! # uint256
-  newProposalThreshold: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type QuorumNumeratorUpdated @entity(immutable: true) {
-  id: Bytes!
-  oldQuorumNumerator: BigInt! # uint256
-  newQuorumNumerator: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type VotingDelaySet @entity(immutable: true) {
-  id: Bytes!
-  oldVotingDelay: BigInt! # uint256
-  newVotingDelay: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type VotingPeriodSet @entity(immutable: true) {
-  id: Bytes!
-  oldVotingPeriod: BigInt! # uint256
-  newVotingPeriod: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type TimelockChange @entity(immutable: true) {
-  id: Bytes!
-  oldTimelock: Bytes! # address
-  newTimelock: Bytes! # address
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
 # Proposal Vote Results Aggregation
 type ProposalVoteResult @entity(immutable: false) {
   id: ID! # proposalId
@@ -432,37 +366,6 @@ type Vote @entity(immutable: true) {
   support: Int! # uint8 (0=against, 1=for, 2=abstain)
   weight: BigInt! # uint256
   reason: String! # string
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-# Token entities for voting power tracking
-type DelegateChanged @entity(immutable: true) {
-  id: Bytes! # tx hash + log index
-  delegator: Bytes!
-  fromDelegate: Bytes!
-  toDelegate: Bytes!
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type DelegateVotesChanged @entity(immutable: true) {
-  id: Bytes! # tx hash + log index
-  delegate: Bytes!
-  previousBalance: BigInt!
-  newBalance: BigInt!
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type TokenTransfer @entity(immutable: true) {
-  id: Bytes! # tx hash + log index
-  from: Bytes!
-  to: Bytes!
-  value: BigInt!
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -578,4 +481,21 @@ type InvestorMonthlySnapshot @entity(immutable: false) {
   amountUSD: BigDecimal!
   profitUSD: BigDecimal!
   profitRatio: BigDecimal!
+}
+
+# Manager NFT Entities
+
+type ManagerNFT @entity(immutable: false) {
+  id: ID! # tokenId
+  tokenId: BigInt! # uint256
+  fundId: BigInt! # uint256
+  manager: Bytes! # address
+  owner: Bytes! # current owner
+  investment: BigInt! # initial investment
+  currentTVL: BigInt! # current total value locked
+  returnRate: BigInt! # return rate
+  fundCreated: BigInt! # fund creation timestamp
+  mintedAt: BigInt! # minting timestamp
+  lastUpdatedAt: BigInt! # last update timestamp
+  transferCount: BigInt! # number of transfers
 }

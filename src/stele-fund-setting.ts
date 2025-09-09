@@ -16,7 +16,9 @@ import {
   MaxTokensChanged,
   OwnerChanged,
   Setting,
-  InvestableToken
+  InvestableToken,
+  AddToken,
+  RemoveToken
 } from "../generated/schema"
 import { 
   STELE_FUND_SETTING_ADDRESS,
@@ -104,6 +106,16 @@ export function handleOwnerChanged(event: OwnerChangedEvent): void {
 }
 
 export function handleAddToken(event: AddTokenEvent): void {
+  // Create AddToken event entity (missing)
+  let entity = new AddToken(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  )
+  entity.token = event.params.token
+  entity.blockNumber = event.block.number
+  entity.blockTimestamp = event.block.timestamp
+  entity.transactionHash = event.transaction.hash
+  entity.save()
+
   let investableToken = InvestableToken.load(event.params.token)
   if (!investableToken) {
     investableToken = new InvestableToken(event.params.token)
@@ -122,6 +134,16 @@ export function handleAddToken(event: AddTokenEvent): void {
 }
 
 export function handleRemoveToken(event: RemoveTokenEvent): void {
+  // Create RemoveToken event entity (missing)
+  let entity = new RemoveToken(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  )
+  entity.token = event.params.token
+  entity.blockNumber = event.block.number
+  entity.blockTimestamp = event.block.timestamp
+  entity.transactionHash = event.transaction.hash
+  entity.save()
+
   let investableToken = InvestableToken.load(event.params.token)
   if (investableToken) {
     investableToken.updatedTimestamp = event.block.timestamp

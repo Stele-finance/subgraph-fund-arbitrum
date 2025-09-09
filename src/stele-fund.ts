@@ -50,6 +50,8 @@ export function handleDeposit(event: DepositEvent): void {
   entity.fundId = event.params.fundId
   entity.investor = event.params.investor
   entity.token = event.params.token
+  entity.investorShare = event.params.investorShare
+  entity.fundShare = event.params.fundShare
   
   // Update FundShare entity
   let fundShareId = event.params.fundId.toString()
@@ -78,16 +80,26 @@ export function handleDeposit(event: DepositEvent): void {
   investorShare.transactionHash = event.transaction.hash
   investorShare.save()
   
-  // Convert raw amount to formatted amount
+  // Convert raw amounts to formatted amounts
   let tokenDecimals = fetchTokenDecimals(event.params.token, event.block.timestamp)
   if (tokenDecimals !== null) {
     let decimalDivisor = exponentToBigDecimal(tokenDecimals)
     let formattedAmount = BigDecimal.fromString(event.params.amount.toString())
       .div(decimalDivisor)
     entity.amount = formattedAmount
+    
+    let formattedFundAmount = BigDecimal.fromString(event.params.fundAmount.toString())
+      .div(decimalDivisor)
+    entity.fundAmount = formattedFundAmount
+    
+    let formattedFeeAmount = BigDecimal.fromString(event.params.feeAmount.toString())
+      .div(decimalDivisor)
+    entity.feeAmount = formattedFeeAmount
   } else {
     log.warning('[DEPOSIT] Failed to get decimals for token: {}', [event.params.token.toHexString()])
     entity.amount = BigDecimal.fromString("0")
+    entity.fundAmount = BigDecimal.fromString("0")
+    entity.feeAmount = BigDecimal.fromString("0")
   }
   
   // Fetch token symbol
@@ -115,6 +127,7 @@ export function handleDeposit(event: DepositEvent): void {
 
     // Use the formatted amount from entity.amount instead of raw amount
     const amountDecimal = entity.amount
+    const fundAmountDecimal = entity.fundAmount
     const amountETH = amountDecimal.times(tokenPriceETH)
     const amountUSD = amountETH.times(ethPriceInUSD)
 
@@ -232,7 +245,7 @@ export function handleDeposit(event: DepositEvent): void {
         tokens.push(tokenAddress)
         symbols.push(fetchTokenSymbol(tokenAddress, event.block.timestamp))
         decimalsArray.push(decimals)
-        amounts.push(amountDecimal)
+        amounts.push(fundAmountDecimal)
         
         fund.tokens = tokens
         fund.tokensSymbols = symbols
@@ -241,14 +254,14 @@ export function handleDeposit(event: DepositEvent): void {
       } else {
         // Existing token
         let amounts = fund.tokensAmount
-        amounts[tokenIndex] = amounts[tokenIndex].plus(amountDecimal)
+        amounts[tokenIndex] = amounts[tokenIndex].plus(fundAmountDecimal)
         fund.tokensAmount = amounts
       }
       
-      // Add manager fee to fund's fee tokens if managerFee > 0
-      if (event.params.managerFee.gt(ZERO_BI) && tokenDecimals !== null) {
+      // Add manager fee to fund's fee tokens if feeAmount > 0
+      if (event.params.feeAmount.gt(ZERO_BI) && tokenDecimals !== null) {
         let tokenDecimalDivisor = exponentToBigDecimal(tokenDecimals)
-        let managerFeeDecimal = BigDecimal.fromString(event.params.managerFee.toString())
+        let managerFeeDecimal = BigDecimal.fromString(event.params.feeAmount.toString())
           .div(tokenDecimalDivisor)
         
         // Check if fee token already exists
